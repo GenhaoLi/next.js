@@ -982,7 +982,7 @@ async function getErrorRSCPayload(
   const seedData: CacheNodeSeedData = [
     initialTree[0],
     <html id="__next_error__">
-      <head>{metadata}</head>
+      <head></head>
       <body>
         {process.env.NODE_ENV !== 'production' && err ? (
           <template
