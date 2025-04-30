@@ -58,8 +58,8 @@ where
 #[inline(never)] // Mutex outside of the hot path
 fn restore_strings_with_in_memory_cache(
     intern_map: Vec<u32>,
-    query_db: impl FnOnce(Vec<u32>) -> pot::Result<Vec<RcStr>>,
-) -> pot::Result<Vec<RcStr>> {
+    query_db: impl FnOnce(Vec<u32>) -> anyhow::Result<Vec<RcStr>>,
+) -> anyhow::Result<Vec<RcStr>> {
     let missing = intern_map
         .iter()
         .copied()
@@ -82,8 +82,8 @@ fn restore_strings_with_in_memory_cache(
 pub fn from_slice<T>(
     config: &pot::Config,
     slice: &[u8],
-    query_db: impl FnOnce(Vec<u32>) -> pot::Result<Vec<RcStr>>,
-) -> pot::Result<T>
+    query_db: impl FnOnce(Vec<u32>) -> anyhow::Result<Vec<RcStr>>,
+) -> anyhow::Result<T>
 where
     T: DeserializeOwned,
 {
@@ -103,5 +103,5 @@ where
 
     let de_map = restore_strings_with_in_memory_cache(intern_map, query_db)?;
 
-    turbo_rcstr::set_de_map(&de_map, || config.deserialize_from(&mut reader))
+    turbo_rcstr::set_de_map(&de_map, || Ok(config.deserialize_from(&mut reader)?))
 }
