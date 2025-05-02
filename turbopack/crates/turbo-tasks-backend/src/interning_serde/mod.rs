@@ -17,6 +17,14 @@ where
     Ok((vec, ser_map))
 }
 
+pub struct LocalIdToRcStr(Vec<RcStr>);
+
+impl From<Vec<RcStr>> for LocalIdToRcStr {
+    fn from(value: Vec<RcStr>) -> Self {
+        Self(value)
+    }
+}
+
 #[derive(Default)]
 pub struct RcStrToLocalId(IndexSet<RcStr, FxBuildHasher>);
 
@@ -36,6 +44,14 @@ impl From<Vec<u32>> for LocalIdToGlobalId {
 }
 
 impl LocalIdToGlobalId {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn iter(&self) -> impl '_ + Iterator<Item = u32> {
+        self.0.iter().copied()
+    }
+
     pub fn write_to(&self, writer: &mut impl Write) -> anyhow::Result<()> {
         let len = self.0.len() as u32;
         for id in self.0.iter().rev() {
@@ -47,7 +63,7 @@ impl LocalIdToGlobalId {
         Ok(())
     }
 
-    fn read_from_slice(mut bytes: &[u8]) -> anyhow::Result<(Self, &[u8])> {
+    pub fn read_from_slice(mut bytes: &[u8]) -> anyhow::Result<(Self, &[u8])> {
         let mut global_ids = Vec::new();
 
         // Length is the last 4 bytes
@@ -81,18 +97,10 @@ where
 pub fn from_slice<T>(
     config: &pot::Config,
     bytes: &[u8],
-    query_db: impl FnMut(u32) -> anyhow::Result<RcStr>,
+    de_map: &LocalIdToRcStr,
 ) -> anyhow::Result<T>
 where
     T: DeserializeOwned,
 {
-    let (global_ids, bytes) = LocalIdToGlobalId::read_from_slice(bytes)?;
-
-    let de_map = global_ids
-        .0
-        .into_iter()
-        .map(query_db)
-        .collect::<anyhow::Result<Vec<_>>>()?;
-
-    turbo_rcstr::set_de_map(&de_map, || Ok(config.deserialize(bytes)?))
+    turbo_rcstr::set_de_map(&de_map.0, || Ok(config.deserialize(bytes)?))
 }

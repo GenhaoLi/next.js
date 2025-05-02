@@ -26,7 +26,7 @@ use crate::{
             WriteBuffer,
         },
     },
-    interning_serde::{self, LocalIdToGlobalId, RcStrToLocalId},
+    interning_serde::{self, LocalIdToGlobalId, LocalIdToRcStr, RcStrToLocalId},
     utils::chunked_vec::ChunkedVec,
 };
 
@@ -160,10 +160,12 @@ impl<T: KeyValueDatabase + Send + Sync + 'static> BackingStorage
             else {
                 return Ok(Vec::new());
             };
-            let operations =
-                interning_serde::from_slice(&POT_CONFIG, operations.borrow(), |global_ids| {
-                    restore_string(database, &tx, global_ids)
-                })?;
+
+            let (global_ids, operations) = LocalIdToGlobalId::read_from_slice(operations.borrow())?;
+
+            let map = restore_strings(database, &tx, &global_ids)?;
+
+            let operations = interning_serde::from_slice(&POT_CONFIG, operations, &map)?;
             Ok(operations)
         }
         get(&self.database).unwrap_or_default()
@@ -436,11 +438,12 @@ impl<T: KeyValueDatabase + Send + Sync + 'static> BackingStorage
             else {
                 return Ok(None);
             };
-            Ok(Some(interning_serde::from_slice(
-                &POT_CONFIG,
-                bytes.borrow(),
-                |global_ids| restore_string(database, tx, global_ids),
-            )?))
+
+            let (global_ids, bytes) = LocalIdToGlobalId::read_from_slice(bytes.borrow())?;
+
+            let map = restore_strings(database, tx, &global_ids)?;
+
+            Ok(Some(interning_serde::from_slice(&POT_CONFIG, bytes, &map)?))
         }
         let result = self
             .with_tx(tx, |tx| lookup(&self.database, tx, task_id))
@@ -473,11 +476,12 @@ impl<T: KeyValueDatabase + Send + Sync + 'static> BackingStorage
             else {
                 return Ok(Vec::new());
             };
+
+            let (global_ids, bytes) = LocalIdToGlobalId::read_from_slice(bytes.borrow())?;
+            let map = restore_strings(database, tx, &global_ids)?;
+
             let result: Vec<CachedDataItem> =
-                interning_serde::from_slice(&POT_CONFIG, bytes.borrow(), |intern_map| {
-                    let de_map = restore_string(database, tx, intern_map)?;
-                    Ok(de_map)
-                })?;
+                interning_serde::from_slice(&POT_CONFIG, bytes, &map)?;
             Ok(result)
         }
         self.with_tx(tx, |tx| lookup(&self.database, tx, task_id, category))
@@ -490,24 +494,30 @@ impl<T: KeyValueDatabase + Send + Sync + 'static> BackingStorage
     }
 }
 
-fn restore_string<D: KeyValueDatabase>(
+fn restore_strings<D: KeyValueDatabase>(
     database: &D,
     tx: &D::ReadTransaction<'_>,
-    global_id: u32,
-) -> Result<RcStr> {
-    let Some(value) = database.get(
-        tx,
-        KeySpace::ReverseStringInternMap,
-        IntKey::new(global_id).as_ref(),
-    )?
-    else {
-        bail!("Unable to find string for {global_id}")
-    };
+    global_ids: &LocalIdToGlobalId,
+) -> Result<LocalIdToRcStr> {
+    let mut map = Vec::with_capacity(global_ids.len());
 
-    Ok(unsafe {
-        // Safety: We interned a rust string, so it is valid utf-8
-        RcStr::from(str::from_utf8_unchecked(value.borrow()))
-    })
+    for global_id in global_ids.iter() {
+        let Some(value) = database.get(
+            tx,
+            KeySpace::ReverseStringInternMap,
+            IntKey::new(global_id).as_ref(),
+        )?
+        else {
+            bail!("Unable to find string for {global_id}")
+        };
+
+        map.push(unsafe {
+            // Safety: We interned a rust string, so it is valid utf-8
+            RcStr::from(str::from_utf8_unchecked(value.borrow()))
+        });
+    }
+
+    Ok(map.into())
 }
 
 fn get_next_free_task_id<'a, S, C>(
