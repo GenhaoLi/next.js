@@ -1,6 +1,6 @@
 //! Exposed for usage in `turbo-tasks-backend`
 
-use std::io::{Read, Write};
+use std::io::Write;
 
 use indexmap::IndexSet;
 use rustc_hash::FxBuildHasher;
@@ -32,28 +32,32 @@ impl From<Vec<u32>> for LocalIdToGlobalId {
 impl LocalIdToGlobalId {
     pub fn write_to(&self, writer: &mut impl Write) -> anyhow::Result<()> {
         let len = self.0.len() as u32;
-        writer.write_all(&len.to_le_bytes())?;
-        for id in self.0.iter() {
+        for id in self.0.iter().rev() {
             writer.write_all(&id.to_le_bytes())?;
         }
+
+        writer.write_all(&len.to_le_bytes())?;
+
         Ok(())
     }
 
-    fn read_from(reader: &mut impl Read) -> anyhow::Result<Self> {
+    fn read_from_slice(mut bytes: &[u8]) -> anyhow::Result<(Self, &[u8])> {
         let mut global_ids = Vec::new();
 
-        let mut len = [0; 4];
-        reader.read_exact(&mut len)?;
-        let len = u32::from_le_bytes(len);
+        // Length is the last 4 bytes
+        let len = u32::from_le_bytes(bytes[bytes.len() - 4..].try_into().unwrap());
         global_ids.reserve(len as usize);
 
+        bytes = &bytes[..bytes.len() - 4];
+
+        // Read the ids in reverse order
         for _ in 0..len {
-            let mut id = [0; 4];
-            reader.read_exact(&mut id)?;
-            global_ids.push(u32::from_le_bytes(id));
+            let id = u32::from_le_bytes(bytes[bytes.len() - 4..].try_into().unwrap());
+            global_ids.push(id);
+            bytes = &bytes[..bytes.len() - 4];
         }
 
-        Ok(Self(global_ids))
+        Ok((Self(global_ids), bytes))
     }
 }
 
@@ -70,15 +74,13 @@ where
 
 pub fn from_slice<T>(
     config: &pot::Config,
-    slice: &[u8],
+    bytes: &[u8],
     query_db: impl FnMut(u32) -> anyhow::Result<RcStr>,
 ) -> anyhow::Result<T>
 where
     T: DeserializeOwned,
 {
-    let mut reader = std::io::Cursor::new(slice);
-
-    let global_ids = LocalIdToGlobalId::read_from(&mut reader)?;
+    let (global_ids, bytes) = LocalIdToGlobalId::read_from_slice(bytes)?;
 
     let de_map = global_ids
         .0
@@ -86,5 +88,5 @@ where
         .map(query_db)
         .collect::<anyhow::Result<Vec<_>>>()?;
 
-    turbo_rcstr::set_de_map(&de_map, || Ok(config.deserialize_from(&mut reader)?))
+    turbo_rcstr::set_de_map(&de_map, || Ok(config.deserialize(bytes)?))
 }
