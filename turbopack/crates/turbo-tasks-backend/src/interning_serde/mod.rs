@@ -20,6 +20,12 @@ where
 #[derive(Default)]
 pub struct RcStrToLocalId(IndexSet<RcStr, FxBuildHasher>);
 
+impl RcStrToLocalId {
+    pub fn iter(&self) -> impl Iterator<Item = &RcStr> {
+        self.0.iter()
+    }
+}
+
 #[derive(Default)]
 pub struct LocalIdToGlobalId(Vec<u32>);
 
