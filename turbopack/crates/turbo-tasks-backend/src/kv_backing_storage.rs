@@ -72,7 +72,7 @@ fn pot_de_symbol_list<'l>() -> pot::de::SymbolList<'l> {
 const META_KEY_OPERATIONS: u32 = 0;
 const META_KEY_NEXT_FREE_TASK_ID: u32 = 1;
 const META_KEY_SESSION_ID: u32 = 2;
-const META_KEY_STRING_ID: u32 = 3;
+const META_KEY_NEXT_STRING_ID: u32 = 3;
 
 struct IntKey([u8; 4]);
 
@@ -587,7 +587,23 @@ where
             )
             .with_context(|| anyhow!("Unable to write operations"))?;
     }
+
+    if let Some(next_string_id) = STRING_INTERN_ID.get() {
+        let _span = tracing::trace_span!("update next string id").entered();
+
+        let next_string_id = next_string_id.load(Ordering::SeqCst);
+
+        batch
+            .put(
+                KeySpace::Infra,
+                WriteBuffer::Borrowed(IntKey::new(META_KEY_NEXT_STRING_ID).as_ref()),
+                WriteBuffer::Borrowed(&next_string_id.to_le_bytes()),
+            )
+            .with_context(|| anyhow!("Unable to write next string id"))?;
+    }
+
     batch.flush(KeySpace::Infra)?;
+
     Ok(())
 }
 
@@ -793,15 +809,21 @@ fn get_string_id<'a>(batch: &impl BaseWriteBatch<'a>, s: &RcStr) -> Result<(u32,
         return Ok((global_id, false));
     }
 
-    let Some(bytes) = batch.get(KeySpace::Infra, IntKey::new(META_KEY_STRING_ID).as_ref())? else {
-        return Ok((0, true));
-    };
-
-    let latest_id = as_u32(bytes)?;
-
     let global_id = STRING_INTERN_ID
-        .get_or_init(|| AtomicU32::new(latest_id))
-        .fetch_add(1, Ordering::Relaxed);
+        .get_or_try_init(|| {
+            let Some(bytes) = batch.get(
+                KeySpace::Infra,
+                IntKey::new(META_KEY_NEXT_STRING_ID).as_ref(),
+            )?
+            else {
+                return anyhow::Ok(AtomicU32::new(0));
+            };
+
+            let latest_id = as_u32(bytes)?;
+
+            Ok(AtomicU32::new(latest_id))
+        })?
+        .fetch_add(1, Ordering::SeqCst);
 
     Ok((global_id, true))
 }
