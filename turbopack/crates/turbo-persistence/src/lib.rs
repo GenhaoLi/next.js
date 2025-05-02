@@ -9,7 +9,6 @@ mod collector_entry;
 mod compaction;
 mod constants;
 mod db;
-pub mod interning_serde;
 mod key;
 mod lookup_entry;
 mod merge_iter;

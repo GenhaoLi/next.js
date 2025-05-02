@@ -5,7 +5,6 @@ use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterato
 use serde::Serialize;
 use smallvec::SmallVec;
 use tracing::Span;
-use turbo_persistence::interning_serde;
 use turbo_tasks::{backend::CachedTaskType, turbo_tasks_scope, SessionId, TaskId};
 
 use crate::{
@@ -19,6 +18,7 @@ use crate::{
             WriteBuffer,
         },
     },
+    interning_serde,
     utils::chunked_vec::ChunkedVec,
 };
 
