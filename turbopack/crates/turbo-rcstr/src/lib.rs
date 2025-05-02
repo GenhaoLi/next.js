@@ -129,20 +129,6 @@ impl RcStr {
 
         Self { unsafe_data: alias }
     }
-
-    fn ref_count(&self) -> usize {
-        match self.tag() {
-            DYNAMIC_TAG => {
-                // convert `self` into `arc`
-                let arc = unsafe { dynamic::restore_arc(self.unsafe_data) };
-                let count = Arc::count(&arc);
-                forget(arc);
-                count
-            }
-            INLINE_TAG => 1,
-            _ => unsafe { debug_unreachable!() },
-        }
-    }
 }
 
 impl DeterministicHash for RcStr {
