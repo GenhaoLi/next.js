@@ -1,7 +1,7 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, hash::BuildHasherDefault};
 
 use indexmap::IndexSet;
-use rustc_hash::FxBuildHasher;
+use rustc_hash::FxHasher;
 use scoped_tls::scoped_thread_local;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -11,15 +11,15 @@ scoped_thread_local!(
     /// Map of strings to their interned ids.
     ///
     /// This is used to serialize strings to their interned ids.
-    static SER_MAP: RefCell<IndexSet<RcStr,FxBuildHasher>>
+    static SER_MAP: RefCell<IndexSet<RcStr, BuildHasherDefault<FxHasher>>>
 );
 
 scoped_thread_local!(
     /// Read-only map of strings to their interned ids
-    static DE_MAP: IndexSet<RcStr,FxBuildHasher>
+    static DE_MAP: Vec<RcStr>
 );
 
-pub fn set_ser_map<F, R>(f: F) -> (R, IndexSet<RcStr, FxBuildHasher>)
+pub fn set_ser_map<F, R>(f: F) -> (R, IndexSet<RcStr, BuildHasherDefault<FxHasher>>)
 where
     F: FnOnce() -> R,
 {
@@ -30,7 +30,7 @@ where
     (r, map.into_inner())
 }
 
-pub fn set_de_map<F, R>(map: &IndexSet<RcStr, FxBuildHasher>, f: F) -> R
+pub fn set_de_map<F, R>(map: &Vec<RcStr>, f: F) -> R
 where
     F: FnOnce() -> R,
 {
@@ -88,7 +88,7 @@ impl<'de> Deserialize<'de> for RcStr {
             Repr::String(s) => Ok(RcStr::from(s)),
             Repr::Id(id) => DE_MAP.with(|map| {
                 let s = map
-                    .get_index(id as usize)
+                    .get(id as usize)
                     .ok_or_else(|| D::Error::custom(format!("failed to find id: {}", id)))?;
                 Ok(s.clone())
             }),
