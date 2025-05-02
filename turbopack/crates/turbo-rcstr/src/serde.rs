@@ -61,7 +61,7 @@ fn intern_for_serialize(str: &RcStr) -> Option<u32> {
 
 impl Serialize for RcStr {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        if self.len() >= 3 && (self.len() < 512 || self.ref_count() >= 2) {
+        if self.len() >= 3 && self.len() < 512 {
             let id = intern_for_serialize(self);
             if let Some(id) = id {
                 return serializer.serialize_u32(id);
