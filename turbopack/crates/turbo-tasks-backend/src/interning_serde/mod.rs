@@ -2,8 +2,6 @@
 
 use std::io::Write;
 
-use indexmap::IndexSet;
-use rustc_hash::FxBuildHasher;
 use serde::{de::DeserializeOwned, Serialize};
 use turbo_rcstr::RcStr;
 use turbo_tasks::FxIndexSet;
@@ -26,7 +24,7 @@ impl From<Vec<RcStr>> for LocalIdToRcStr {
 }
 
 #[derive(Default)]
-pub struct RcStrToLocalId(IndexSet<RcStr, FxBuildHasher>);
+pub struct RcStrToLocalId(FxIndexSet<RcStr>);
 
 impl RcStrToLocalId {
     pub fn iter(&self) -> impl Iterator<Item = &RcStr> {
