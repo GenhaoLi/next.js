@@ -23,7 +23,6 @@ use parking_lot::{Condvar, Mutex};
 use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
 use smallvec::{smallvec, SmallVec};
 use tokio::time::{Duration, Instant};
-use turbo_persistence::interning_serde::RcStrToLocalId;
 use turbo_tasks::{
     backend::{
         Backend, BackendJobId, CachedTaskType, CellContent, TaskExecutionSpec, TransientTaskRoot,
@@ -60,6 +59,7 @@ use crate::{
         CachedDataItemValueRef, CellRef, CollectibleRef, CollectiblesRef, DirtyState,
         InProgressCellState, InProgressState, InProgressStateInner, OutputValue, RootType,
     },
+    interning_serde::RcStrToLocalId,
     utils::{
         bi_map::BiMap, chunked_vec::ChunkedVec, ptr_eq_arc::PtrEqArc, sharded::Sharded, swap_retain,
     },

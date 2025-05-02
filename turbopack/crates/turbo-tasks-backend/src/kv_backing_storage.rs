@@ -26,7 +26,7 @@ use crate::{
             WriteBuffer,
         },
     },
-    interning_serde,
+    interning_serde::{self, LocalIdToGlobalId, RcStrToLocalId},
     utils::chunked_vec::ChunkedVec,
 };
 

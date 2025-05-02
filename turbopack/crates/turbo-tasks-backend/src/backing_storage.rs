@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use smallvec::SmallVec;
-use turbo_persistence::interning_serde::RcStrToLocalId;
 use turbo_tasks::{backend::CachedTaskType, SessionId, TaskId};
 
 use crate::{
     backend::{AnyOperation, TaskDataCategory},
     data::CachedDataItem,
+    interning_serde::RcStrToLocalId,
     utils::chunked_vec::ChunkedVec,
 };
 
