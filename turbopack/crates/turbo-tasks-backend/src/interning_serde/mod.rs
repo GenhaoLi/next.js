@@ -18,7 +18,7 @@ where
 }
 
 #[derive(Default)]
-pub struct RcStrToLocalId(pub IndexSet<RcStr, FxBuildHasher>);
+pub struct RcStrToLocalId(IndexSet<RcStr, FxBuildHasher>);
 
 #[derive(Default)]
 pub struct LocalIdToGlobalId(Vec<u32>);
