@@ -15,9 +15,9 @@ where
     Ok((vec, ser_map))
 }
 
-pub struct LocalIdToRcStr(Vec<RcStr>);
+pub struct GlobalIdToRcStr(Vec<RcStr>);
 
-impl From<Vec<RcStr>> for LocalIdToRcStr {
+impl From<Vec<RcStr>> for GlobalIdToRcStr {
     fn from(value: Vec<RcStr>) -> Self {
         Self(value)
     }
@@ -95,7 +95,7 @@ where
 pub fn from_slice<T>(
     config: &pot::Config,
     bytes: &[u8],
-    de_map: &LocalIdToRcStr,
+    de_map: &GlobalIdToRcStr,
 ) -> anyhow::Result<T>
 where
     T: DeserializeOwned,

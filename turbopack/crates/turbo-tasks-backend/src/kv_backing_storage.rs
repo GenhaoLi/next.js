@@ -26,7 +26,7 @@ use crate::{
             WriteBuffer,
         },
     },
-    interning_serde::{self, LocalIdToGlobalId, LocalIdToRcStr, RcStrToLocalId},
+    interning_serde::{self, GlobalIdToRcStr, LocalIdToGlobalId, RcStrToLocalId},
     utils::chunked_vec::ChunkedVec,
 };
 
@@ -498,7 +498,7 @@ fn restore_strings<D: KeyValueDatabase>(
     database: &D,
     tx: &D::ReadTransaction<'_>,
     global_ids: &LocalIdToGlobalId,
-) -> Result<LocalIdToRcStr> {
+) -> Result<GlobalIdToRcStr> {
     let mut map = Vec::with_capacity(global_ids.len());
 
     for global_id in global_ids.iter() {
