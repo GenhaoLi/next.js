@@ -100,5 +100,13 @@ pub fn from_slice<T>(
 where
     T: DeserializeOwned,
 {
-    turbo_rcstr::set_de_map(&de_map.0, || Ok(config.deserialize(bytes)?))
+    let (local_id_to_global_id, bytes) = LocalIdToGlobalId::read_from_slice(bytes)?;
+
+    let mut local_id_to_rc_str = Vec::with_capacity(de_map.0.len());
+
+    for global_id in local_id_to_global_id.iter() {
+        local_id_to_rc_str.push(de_map.0[global_id as usize].clone());
+    }
+
+    turbo_rcstr::set_de_map(&local_id_to_rc_str, || Ok(config.deserialize(bytes)?))
 }
