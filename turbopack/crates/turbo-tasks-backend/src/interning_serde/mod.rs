@@ -15,9 +15,9 @@ where
     Ok((vec, ser_map))
 }
 
-pub struct GlobalIdToRcStr(Vec<RcStr>);
+pub struct LocalIdToRcStr(Vec<RcStr>);
 
-impl From<Vec<RcStr>> for GlobalIdToRcStr {
+impl From<Vec<RcStr>> for LocalIdToRcStr {
     fn from(value: Vec<RcStr>) -> Self {
         Self(value)
     }
@@ -51,6 +51,8 @@ impl LocalIdToGlobalId {
     }
 
     pub fn write_to(&self, writer: &mut impl Write) -> anyhow::Result<()> {
+        dbg!(&self.0);
+
         let len = self.0.len() as u32;
         for id in self.0.iter().rev() {
             writer.write_all(&id.to_le_bytes())?;
@@ -77,6 +79,8 @@ impl LocalIdToGlobalId {
             bytes = &bytes[..bytes.len() - 4];
         }
 
+        dbg!(&global_ids);
+
         Ok((Self(global_ids), bytes))
     }
 }
@@ -89,24 +93,18 @@ where
     let (result, ser_map) = turbo_rcstr::set_ser_map(|| config.serialize_into(value, writer));
     result?;
 
+    dbg!(&ser_map);
+
     Ok(RcStrToLocalId(ser_map))
 }
 
 pub fn from_slice<T>(
     config: &pot::Config,
     bytes: &[u8],
-    de_map: &GlobalIdToRcStr,
+    de_map: &LocalIdToRcStr,
 ) -> anyhow::Result<T>
 where
     T: DeserializeOwned,
 {
-    let (local_id_to_global_id, bytes) = LocalIdToGlobalId::read_from_slice(bytes)?;
-
-    let mut local_id_to_rc_str = Vec::with_capacity(de_map.0.len());
-
-    for global_id in local_id_to_global_id.iter() {
-        local_id_to_rc_str.push(de_map.0[global_id as usize].clone());
-    }
-
-    turbo_rcstr::set_de_map(&local_id_to_rc_str, || Ok(config.deserialize(bytes)?))
+    turbo_rcstr::set_de_map(&de_map.0, || Ok(config.deserialize(bytes)?))
 }
