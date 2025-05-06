@@ -285,11 +285,7 @@ impl PagesProject {
         Ok(if let Some(pages) = self.pages_structure().await?.pages {
             pages.project_path()
         } else {
-            self.project()
-                .project_path()
-                .await?
-                .join("pages".into())?
-                .cell()
+            self.project().project_path().await?.join("pages")?.cell()
         })
     }
 
@@ -639,7 +635,7 @@ impl PagesProject {
         let client_main_module = esm_resolve(
             Vc::upcast(PlainResolveOrigin::new(
                 client_module_context,
-                self.project().project_path().await?.join("_".into())?,
+                self.project().project_path().await?.join("_")?,
             )),
             Request::parse(Value::new(Pattern::Constant(
                 match *self.project().next_mode().await? {
@@ -1090,8 +1086,8 @@ impl PageEndpoint {
 
                 let asset_path = get_asset_path_from_pathname(pathname, ".js");
 
-                let ssr_entry_chunk_path_string: RcStr = format!("pages{asset_path}").into();
-                let ssr_entry_chunk_path = node_path.join(ssr_entry_chunk_path_string)?;
+                let ssr_entry_chunk_path_string = format!("pages{asset_path}");
+                let ssr_entry_chunk_path = node_path.join(&ssr_entry_chunk_path_string)?;
                 let ssr_entry_chunk = node_chunking_context
                     .entry_chunk_group_asset(
                         ssr_entry_chunk_path,
@@ -1156,7 +1152,7 @@ impl PageEndpoint {
                 .project()
                 .node_root()
                 .await?
-                .join("server".into())?,
+                .join("server")?,
             project.server_chunking_context(true),
             project.edge_chunking_context(true),
             this.pages_project.ssr_runtime_entries(),
@@ -1173,7 +1169,7 @@ impl PageEndpoint {
                 .project()
                 .node_root()
                 .await?
-                .join("server/data".into())?,
+                .join("server/data")?,
             this.pages_project.project().server_chunking_context(true),
             this.pages_project.project().edge_chunking_context(true),
             this.pages_project.ssr_data_runtime_entries(),
@@ -1190,7 +1186,7 @@ impl PageEndpoint {
                 .project()
                 .node_root()
                 .await?
-                .join("server".into())?,
+                .join("server")?,
             this.pages_project.project().server_chunking_context(false),
             this.pages_project.project().edge_chunking_context(false),
             this.pages_project.ssr_runtime_entries(),
@@ -1208,7 +1204,7 @@ impl PageEndpoint {
 
         let asset_path = node_root
             .await?
-            .join("server".into())?
+            .join("server")?
             .get_path_to(&chunk_path)
             .context("ssr chunk entry path must be inside the node root")?;
 
@@ -1219,9 +1215,9 @@ impl PageEndpoint {
         };
         let manifest_path_prefix = get_asset_prefix_from_pathname(&self.pathname.await?);
         let asset = Vc::upcast(VirtualOutputAsset::new(
-            node_root
-                .await?
-                .join(format!("server/pages{manifest_path_prefix}/pages-manifest.json",).into())?,
+            node_root.await?.join(&format!(
+                "server/pages{manifest_path_prefix}/pages-manifest.json"
+            ))?,
             AssetContent::file(File::from(serde_json::to_string_pretty(&pages_manifest)?).into()),
         ));
         Ok(asset)
@@ -1240,9 +1236,9 @@ impl PageEndpoint {
         Ok(create_react_loadable_manifest(
             dynamic_import_entries,
             client_relative_path,
-            node_root.await?.join(
-                format!("server/pages{loadable_path_prefix}/react-loadable-manifest").into(),
-            )?,
+            node_root.await?.join(&format!(
+                "server/pages{loadable_path_prefix}/react-loadable-manifest"
+            ))?,
             runtime,
         ))
     }
@@ -1263,9 +1259,9 @@ impl PageEndpoint {
         Ok(Vc::upcast(
             build_manifest
                 .build_output(
-                    node_root.join(
-                        format!("server/pages{manifest_path_prefix}/build-manifest.json",).into(),
-                    )?,
+                    node_root.join(&format!(
+                        "server/pages{manifest_path_prefix}/build-manifest.json"
+                    ))?,
                     client_relative_path,
                 )
                 .await?,
@@ -1324,9 +1320,9 @@ impl PageEndpoint {
             let webpack_stats =
                 generate_webpack_stats(original_name.to_owned(), &client_assets.await?).await?;
             let stats_output = VirtualOutputAsset::new(
-                node_root.join(
-                    format!("server/pages{manifest_path_prefix}/webpack-stats.json",).into(),
-                )?,
+                node_root.join(&format!(
+                    "server/pages{manifest_path_prefix}/webpack-stats.json"
+                ))?,
                 AssetContent::file(
                     File::from(serde_json::to_string_pretty(&webpack_stats)?).into(),
                 ),
@@ -1436,10 +1432,9 @@ impl PageEndpoint {
                     let manifest_path_prefix =
                         get_asset_prefix_from_pathname(&this.pathname.await?);
                     let middleware_manifest_v2 = VirtualOutputAsset::new(
-                        node_root.join(
-                            format!("server/pages{manifest_path_prefix}/middleware-manifest.json")
-                                .into(),
-                        )?,
+                        node_root.join(&format!(
+                            "server/pages{manifest_path_prefix}/middleware-manifest.json"
+                        ))?,
                         AssetContent::file(
                             FileContent::Content(File::from(serde_json::to_string_pretty(
                                 &middleware_manifest_v2,

@@ -247,22 +247,18 @@ pub mod tests {
             assert_eq!(read_dir.results.len(), 2);
             assert_eq!(
                 read_dir.results.get("foo"),
-                Some(&DirectoryEntry::File(fs.root().await?.join("foo".into())?))
+                Some(&DirectoryEntry::File(fs.root().await?.join("foo")?))
             );
             assert_eq!(
                 read_dir.results.get("sub"),
-                Some(&DirectoryEntry::Directory(
-                    fs.root().await?.join("sub".into())?
-                ))
+                Some(&DirectoryEntry::Directory(fs.root().await?.join("sub")?))
             );
             assert_eq!(read_dir.inner.len(), 1);
             let inner = &*read_dir.inner.get("sub").unwrap().await?;
             assert_eq!(inner.results.len(), 1);
             assert_eq!(
                 inner.results.get("sub/bar"),
-                Some(&DirectoryEntry::File(
-                    fs.root().await?.join("sub/bar".into())?
-                ))
+                Some(&DirectoryEntry::File(fs.root().await?.join("sub/bar")?))
             );
             assert_eq!(inner.inner.len(), 0);
 
@@ -279,9 +275,7 @@ pub mod tests {
             assert_eq!(inner.results.len(), 1);
             assert_eq!(
                 inner.results.get("sub/bar"),
-                Some(&DirectoryEntry::File(
-                    fs.root().await?.join("sub/bar".into())?
-                ))
+                Some(&DirectoryEntry::File(fs.root().await?.join("sub/bar")?))
             );
             assert_eq!(inner.inner.len(), 0);
 
@@ -327,9 +321,7 @@ pub mod tests {
             assert_eq!(read_dir.results.len(), 1);
             assert_eq!(
                 read_dir.results.get("link.js"),
-                Some(&DirectoryEntry::File(
-                    fs.root().await?.join("sub/foo.js".into())?
-                ))
+                Some(&DirectoryEntry::File(fs.root().await?.join("sub/foo.js")?))
             );
             assert_eq!(read_dir.inner.len(), 0);
 
@@ -390,7 +382,7 @@ pub mod tests {
                 .await?;
 
             // Delete a file that we shouldn't be tracking
-            let delete_result = delete(fs.root().await?.join("sub/.vim/.gitignore".into())?);
+            let delete_result = delete(fs.root().await?.join("sub/.vim/.gitignore")?);
             delete_result.read_strongly_consistent().await?;
             apply_effects(delete_result).await?;
 
@@ -400,7 +392,7 @@ pub mod tests {
             assert!(ReadRef::ptr_eq(&read_dir, &read_dir2));
 
             // Delete a file that we should be tracking
-            let delete_result = delete(fs.root().await?.join("foo".into())?);
+            let delete_result = delete(fs.root().await?.join("foo")?);
             delete_result.read_strongly_consistent().await?;
             apply_effects(delete_result).await?;
 

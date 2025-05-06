@@ -188,7 +188,7 @@ async fn run_inner_operation(resource: RcStr) -> Result<()> {
         .try_join()
         .await?;
 
-    snapshot_issues(plain_issues, out_vc.join("issues".into())?, &REPO_ROOT)
+    snapshot_issues(plain_issues, out_vc.join("issues")?, &REPO_ROOT)
         .await
         .context("Unable to handle issues")?;
 
@@ -215,13 +215,13 @@ async fn run_test_operation(resource: RcStr) -> Result<Vc<FileSystemPath>> {
 
     let relative_path = test_path.strip_prefix(&*REPO_ROOT)?;
     let relative_path: RcStr = sys_to_unix(relative_path.to_str().unwrap()).into();
-    let project_path = project_root.join(relative_path.clone())?;
+    let project_path = project_root.join(&relative_path)?;
 
     let project_path_to_project_root = project_path
         .get_relative_path_to(&project_root)
         .context("Project path is in root path")?;
 
-    let entry_asset = project_path.join(options.entry.into())?;
+    let entry_asset = project_path.join(&options.entry)?;
 
     let env = Environment::new(Value::new(match options.environment {
         SnapshotEnvironment::Browser => {
@@ -338,8 +338,8 @@ async fn run_test_operation(resource: RcStr) -> Result<Vc<FileSystemPath>> {
         .await?
         .map(|asset| EvaluatableAssets::one(asset.to_evaluatable(asset_context)));
 
-    let chunk_root_path = project_path.join("output".into())?;
-    let static_root_path = project_path.join("static".into())?;
+    let chunk_root_path = project_path.join("output")?;
+    let static_root_path = project_path.join("static")?;
 
     let chunking_context: Vc<Box<dyn ChunkingContext>> = match options.runtime {
         Runtime::Browser => Vc::upcast(
@@ -416,17 +416,8 @@ async fn run_test_operation(resource: RcStr) -> Result<Vc<FileSystemPath>> {
                         .entry_chunk_group(
                             // `expected` expects a completely flat output directory.
                             chunk_root_path
-                                .join(
-                                    entry_module
-                                        .ident()
-                                        .path()
-                                        .await?
-                                        .file_stem()
-                                        .as_deref()
-                                        .unwrap()
-                                        .into(),
-                                )?
-                                .with_extension("entry.js".into()),
+                                .join(entry_module.ident().path().await?.file_stem().unwrap())?
+                                .with_extension("entry.js"),
                             evaluatable_assets,
                             module_graph,
                             OutputAssets::empty(),
@@ -499,7 +490,7 @@ async fn maybe_load_env(
     _context: Vc<Box<dyn AssetContext>>,
     path: FileSystemPath,
 ) -> Result<Option<Vc<Box<dyn Source>>>> {
-    let dotenv_path = path.join("input/.env".into())?;
+    let dotenv_path = path.join("input/.env")?;
 
     if !dotenv_path.read().await?.is_content() {
         return Ok(None);

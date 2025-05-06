@@ -177,8 +177,8 @@ async fn read_all_paths_operation(
         width: usize,
     ) -> anyhow::Result<()> {
         for child_id in 0..width {
-            let child_name = RcStr::from(child_id.to_string());
-            let child_path = parent.join(child_name)?;
+            let child_name = child_id.to_string();
+            let child_path = parent.join(&child_name)?;
             if depth == 1 {
                 read_path(invalidations.clone(), child_path).await?;
             } else {

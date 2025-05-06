@@ -27,14 +27,14 @@ pub async fn get_next_pages_transforms_rule(
             RuleCondition::all(vec![
                 RuleCondition::ResourcePathInExactDirectory(pages_dir.clone()),
                 RuleCondition::not(RuleCondition::ResourcePathInExactDirectory(
-                    pages_dir.join("api".into())?,
+                    pages_dir.join("api")?,
                 )),
                 RuleCondition::not(RuleCondition::any(vec![
                     // TODO(alexkirsz): Possibly ignore _app as well?
-                    RuleCondition::ResourcePathEquals(pages_dir.join("_document.js".into())?),
-                    RuleCondition::ResourcePathEquals(pages_dir.join("_document.jsx".into())?),
-                    RuleCondition::ResourcePathEquals(pages_dir.join("_document.ts".into())?),
-                    RuleCondition::ResourcePathEquals(pages_dir.join("_document.tsx".into())?),
+                    RuleCondition::ResourcePathEquals(pages_dir.join("_document.js")?),
+                    RuleCondition::ResourcePathEquals(pages_dir.join("_document.jsx")?),
+                    RuleCondition::ResourcePathEquals(pages_dir.join("_document.ts")?),
+                    RuleCondition::ResourcePathEquals(pages_dir.join("_document.tsx")?),
                 ])),
             ]),
             module_rule_match_js_no_url(enable_mdx_rs),

@@ -55,14 +55,12 @@ impl AttachedFileSystem {
                 .resolve()
                 .await?
                 .await?
-                .join(contained_path.path.clone())?
+                .join(&contained_path.path)?
                 .cell()),
             // in the child filesystem, so we expand to the full path by appending to child_path
-            fs if fs == this.child_fs => Ok(self
-                .child_path()
-                .await?
-                .join(contained_path.path.clone())?
-                .cell()),
+            fs if fs == this.child_fs => {
+                Ok(self.child_path().await?.join(&contained_path.path)?.cell())
+            }
             _ => bail!(
                 "path {} not part of self, the root fs or the child fs",
                 contained_path.value_to_string().await?
@@ -79,7 +77,7 @@ impl AttachedFileSystem {
             .resolve()
             .await?
             .await?
-            .join(self.await?.child_path.clone())?
+            .join(&self.await?.child_path)?
             .cell())
     }
 
@@ -111,14 +109,14 @@ impl AttachedFileSystem {
                     .resolve()
                     .await?
                     .await?
-                    .join(inner_path.into())?
+                    .join(inner_path)?
             } else {
                 this.root_fs
                     .root()
                     .resolve()
                     .await?
                     .await?
-                    .join(path.path.clone())?
+                    .join(&path.path)?
             }
             .cell(),
         )

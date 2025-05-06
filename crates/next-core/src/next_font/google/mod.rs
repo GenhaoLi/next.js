@@ -97,7 +97,7 @@ impl NextFontGoogleReplacer {
         let properties = get_font_css_properties(options, fallback).await?;
         let js_asset = VirtualSource::new(
             next_js_file_path("internal/font/google".into()).await?
-                .join(format!("{}.js", get_request_id(options.font_family(), request_hash).await?).into())?.cell(),
+                .join(&format!("{}.js", get_request_id(options.font_family(), request_hash).await?))?.cell(),
             AssetContent::file(FileContent::Content(
                 formatdoc!(
                     r#"
@@ -206,13 +206,10 @@ impl NextFontGoogleCssModuleReplacer {
             get_scoped_font_family(FontFamilyType::WebFont.cell(), options.font_family());
         let css_virtual_path = next_js_file_path("internal/font/google".into())
             .await?
-            .join(
-                format!(
-                    "/{}.module.css",
-                    get_request_id(options.font_family(), request_hash).await?
-                )
-                .into(),
-            )?;
+            .join(&format!(
+                "/{}.module.css",
+                get_request_id(options.font_family(), request_hash).await?
+            ))?;
 
         // When running Next.js integration tests, use the mock data available in
         // process.env.NEXT_FONT_GOOGLE_MOCKED_RESPONSES instead of making real
@@ -370,7 +367,7 @@ impl ImportMappingReplacement for NextFontGoogleFontFileReplacer {
 
         let font_virtual_path = next_js_file_path("internal/font/google".into())
             .await?
-            .join(format!("/{}.{}", name, ext).into())?
+            .join(&format!("/{}.{}", name, ext))?
             .truncate_file_name_with_hash_vc()?;
 
         // doesn't seem ideal to download the font into a string, but probably doesn't
@@ -396,7 +393,7 @@ impl ImportMappingReplacement for NextFontGoogleFontFileReplacer {
 async fn load_font_data(project_root: FileSystemPath) -> Result<Vc<FontData>> {
     let data: FontData = load_next_js_templateon(
         project_root,
-        "dist/compiled/@next/font/dist/google/font-data.json".into(),
+        "dist/compiled/@next/font/dist/google/font-data.json",
     )
     .await?;
 
@@ -664,7 +661,7 @@ async fn get_mock_stylesheet(
     } = *execution_context.await?;
     let asset_context =
         node_evaluate_asset_context(execution_context, None, None, "next_font".into(), false);
-    let loader_path = mock_fs.root().await?.join("loader.js".into())?;
+    let loader_path = mock_fs.root().await?.join("loader.js")?;
     let mocked_response_asset = asset_context
         .process(
             Vc::upcast(VirtualSource::new(

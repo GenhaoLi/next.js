@@ -227,9 +227,9 @@ async fn extra_configs_changed(
     let parent_path = postcss_config_path.parent();
 
     let config_paths = [
-        parent_path.join("tailwind.config.js".into())?,
-        parent_path.join("tailwind.config.mjs".into())?,
-        parent_path.join("tailwind.config.ts".into())?,
+        parent_path.join("tailwind.config.js")?,
+        parent_path.join("tailwind.config.mjs")?,
+        parent_path.join("tailwind.config.ts")?,
     ];
 
     let configs = config_paths
@@ -293,12 +293,9 @@ impl Source for JsonSource {
     async fn ident(&self) -> Result<Vc<AssetIdent>> {
         match &*self.key.await? {
             Some(key) => Ok(AssetIdent::from_path(
-                self.path
-                    .append(".".into())?
-                    .append(key.clone())?
-                    .append(".json".into())?,
+                self.path.append(".")?.append(key)?.append(".json")?,
             )),
-            None => Ok(AssetIdent::from_path(self.path.append(".json".into())?)),
+            None => Ok(AssetIdent::from_path(self.path.append(".json")?)),
         }
     }
 }
@@ -389,7 +386,7 @@ pub(crate) async fn config_loader_source(
     };
 
     Ok(Vc::upcast(VirtualSource::new(
-        postcss_config_path.append("_.loader.mjs".into())?.cell(),
+        postcss_config_path.append("_.loader.mjs")?.cell(),
         AssetContent::file(File::from(code).into()),
     )))
 }

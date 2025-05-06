@@ -201,7 +201,7 @@ pub async fn get_edge_resolve_options_context(
             .typescript_tsconfig_path()
             .await?
             .as_ref()
-            .map(|p| project_path.join(p.to_owned()))
+            .map(|p| project_path.join(p))
             .transpose()?,
         rules: vec![(
             foreign_code_context_condition(next_config, project_path).await?,
@@ -226,15 +226,15 @@ pub async fn get_edge_chunking_context_with_client_assets(
     turbo_source_maps: Vc<bool>,
     no_mangling: Vc<bool>,
 ) -> Result<Vc<Box<dyn ChunkingContext>>> {
-    let output_root = node_root.join("server/edge".into())?;
+    let output_root = node_root.join("server/edge")?;
     let next_mode = mode.await?;
     let mut builder = BrowserChunkingContext::builder(
         root_path.clone(),
         output_root.clone(),
         output_root_to_root_path,
         client_root.clone(),
-        output_root.join("chunks/ssr".into())?,
-        client_root.join("static/media".into())?,
+        output_root.join("chunks/ssr")?,
+        client_root.join("static/media")?,
         environment,
         next_mode.runtime_type(),
     )
@@ -286,15 +286,15 @@ pub async fn get_edge_chunking_context(
     turbo_source_maps: Vc<bool>,
     no_mangling: Vc<bool>,
 ) -> Result<Vc<Box<dyn ChunkingContext>>> {
-    let output_root = node_root.join("server/edge".into())?;
+    let output_root = node_root.join("server/edge")?;
     let next_mode = mode.await?;
     let mut builder = BrowserChunkingContext::builder(
         root_path,
         output_root.clone(),
         node_root_to_root_path,
         output_root.clone(),
-        output_root.join("chunks".into())?,
-        output_root.join("assets".into())?,
+        output_root.join("chunks")?,
+        output_root.join("assets")?,
         environment,
         next_mode.runtime_type(),
     )

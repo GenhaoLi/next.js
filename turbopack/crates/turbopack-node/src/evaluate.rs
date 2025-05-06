@@ -115,10 +115,7 @@ async fn emit_evaluate_pool_assets_operation(
     } else {
         Cow::Owned(format!("{file_name}.js"))
     };
-    let entrypoint = chunking_context
-        .output_root()
-        .await?
-        .join(file_name.into())?;
+    let entrypoint = chunking_context.output_root().await?.join(&file_name)?;
     let entry_module = asset_context
         .process(
             Vc::upcast(VirtualSource::new(

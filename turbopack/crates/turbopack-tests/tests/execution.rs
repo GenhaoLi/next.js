@@ -273,14 +273,14 @@ async fn prepare_test(resource: RcStr) -> Result<Vc<PreparedTest>> {
         resource_path.display()
     ))?;
     let relative_path: RcStr = sys_to_unix(relative_path.to_str().unwrap()).into();
-    let path = root_fs.root().await?.join(relative_path.clone())?;
-    let project_path = project_root.join(relative_path.clone())?;
+    let path = root_fs.root().await?.join(&relative_path)?;
+    let project_path = project_root.join(&relative_path)?;
     let tests_path = project_fs
         .root()
         .await?
-        .join("turbopack/crates/turbopack-tests".into())?;
+        .join("turbopack/crates/turbopack-tests")?;
 
-    let options_file = path.join("options.json".into())?;
+    let options_file = path.join("options.json")?;
 
     let mut options = TestOptions::default();
     if matches!(*options_file.get_type().await?, FileSystemEntryType::File) {
@@ -310,14 +310,14 @@ async fn run_test_operation(prepared_test: ResolvedVc<PreparedTest>) -> Result<V
         ref options,
     } = &*prepared_test.await?;
 
-    let jest_entry_path = tests_path.join("js/jest-entry.ts".into())?;
-    let test_path = project_path.join("input/index.js".into())?;
+    let jest_entry_path = tests_path.join("js/jest-entry.ts")?;
+    let test_path = project_path.join("input/index.js")?;
 
-    let chunk_root_path = path.join("output".into())?;
-    let static_root_path = path.join("static".into())?;
+    let chunk_root_path = path.join("output")?;
+    let static_root_path = path.join("static")?;
 
     let chunk_root_path_in_root_path_offset = project_path
-        .join("output".into())?
+        .join("output")?
         .get_relative_path_to(project_root)
         .context("Project path is in root path")?;
 
@@ -513,13 +513,9 @@ async fn snapshot_issues(
         .try_join()
         .await?;
 
-    turbopack_test_utils::snapshot::snapshot_issues(
-        plain_issues,
-        path.join("issues".into())?,
-        &REPO_ROOT,
-    )
-    .await
-    .context("Unable to handle issues")?;
+    turbopack_test_utils::snapshot::snapshot_issues(plain_issues, path.join("issues")?, &REPO_ROOT)
+        .await
+        .context("Unable to handle issues")?;
 
     Ok(Default::default())
 }

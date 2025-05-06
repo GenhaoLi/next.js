@@ -73,10 +73,7 @@ async fn get_font_adjustment(
 ) -> Result<FontAdjustment> {
     let options = &*options.await?;
     let main_descriptor = pick_font_for_fallback_generation(&options.fonts)?;
-    let font_file = &*lookup_path
-        .join(main_descriptor.path.clone())?
-        .read()
-        .await?;
+    let font_file = &*lookup_path.join(&main_descriptor.path)?.read().await?;
     let font_file_rope = match font_file {
         FileContent::NotFound => bail!(FontError::FontFileNotFound(main_descriptor.path.clone())),
         FileContent::Content(file) => file.content(),

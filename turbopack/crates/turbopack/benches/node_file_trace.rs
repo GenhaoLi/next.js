@@ -76,7 +76,7 @@ fn bench_emit(b: &mut Bencher, bench_input: &BenchInput) {
         async move {
             let task = tt.spawn_once_task(async move {
                 let input_fs = DiskFileSystem::new("tests".into(), tests_root.clone(), vec![]);
-                let input = input_fs.root().await?.join(input.clone())?;
+                let input = input_fs.root().await?.join(&input)?;
 
                 let input_dir = input.parent().parent();
                 let output_fs: Vc<NullFileSystem> = NullFileSystem.into();

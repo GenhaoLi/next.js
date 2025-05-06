@@ -100,7 +100,7 @@ impl EcmascriptBuildNodeRuntimeChunk {
             turbopack_ecmascript_runtime::embed_fs()
                 .root()
                 .await?
-                .join("runtime.js".into())?,
+                .join("runtime.js")?,
         ))
     }
 

@@ -148,13 +148,10 @@ impl OutputAsset for PageLoaderAsset {
             .as_ref()
             .map_or(self.server_root.clone(), |path| path.clone());
         Ok(root
-            .join(
-                format!(
-                    "static/chunks/pages{}",
-                    get_asset_path_from_pathname(&self.pathname.await?, ".js")
-                )
-                .into(),
-            )?
+            .join(&format!(
+                "static/chunks/pages{}",
+                get_asset_path_from_pathname(&self.pathname.await?, ".js")
+            ))?
             .cell())
     }
 

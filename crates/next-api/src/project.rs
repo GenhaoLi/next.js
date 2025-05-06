@@ -676,12 +676,7 @@ impl Project {
     #[turbo_tasks::function]
     pub async fn node_root(self: Vc<Self>) -> Result<Vc<FileSystemPath>> {
         let this = self.await?;
-        Ok(self
-            .output_fs()
-            .root()
-            .await?
-            .join(this.dist_dir.clone())?
-            .cell())
+        Ok(self.output_fs().root().await?.join(&this.dist_dir)?.cell())
     }
 
     #[turbo_tasks::function]
@@ -700,13 +695,10 @@ impl Project {
         Ok(self
             .client_root()
             .await?
-            .join(
-                format!(
-                    "{}/_next",
-                    next_config.base_path.clone().unwrap_or_else(|| "".into()),
-                )
-                .into(),
-            )?
+            .join(&format!(
+                "{}/_next",
+                next_config.base_path.clone().unwrap_or_else(|| "".into()),
+            ))?
             .cell())
     }
 
@@ -716,7 +708,7 @@ impl Project {
         let output_root_to_root_path = self
             .project_path()
             .await?
-            .join(this.dist_dir.clone())?
+            .join(&this.dist_dir)?
             .get_relative_path_to(&*self.project_root_path().await?)
             .context("Project path need to be in root path")?;
         Ok(Vc::cell(output_root_to_root_path))
@@ -731,7 +723,7 @@ impl Project {
             .strip_prefix(MAIN_SEPARATOR)
             .unwrap_or(project_relative)
             .replace(MAIN_SEPARATOR, "/");
-        Ok(root.join(project_relative.into())?.cell())
+        Ok(root.join(&project_relative)?.cell())
     }
 
     #[turbo_tasks::function]
@@ -792,8 +784,8 @@ impl Project {
                 node_root.clone(),
                 self.node_root_to_root_path().to_resolved().await?,
                 node_root.clone(),
-                node_root.join("build/chunks".into())?,
-                node_root.join("build/assets".into())?,
+                node_root.join("build/chunks")?,
+                node_root.join("build/assets")?,
                 node_build_environment().to_resolved().await?,
                 next_mode.runtime_type(),
             )
@@ -1630,11 +1622,7 @@ impl Project {
     #[turbo_tasks::function]
     async fn hmr_content(self: Vc<Self>, identifier: RcStr) -> Result<Vc<OptionVersionedContent>> {
         if let Some(map) = self.await?.versioned_content_map {
-            let content = map.get(
-                self.client_relative_path()
-                    .await?
-                    .join(identifier.clone())?,
-            );
+            let content = map.get(self.client_relative_path().await?.join(&identifier)?);
             Ok(content)
         } else {
             bail!("must be in dev mode to hmr")

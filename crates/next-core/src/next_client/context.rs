@@ -214,7 +214,7 @@ pub async fn get_client_resolve_options_context(
             .typescript_tsconfig_path()
             .await?
             .as_ref()
-            .map(|p| project_path.join(p.to_owned()))
+            .map(|p| project_path.join(p))
             .transpose()?,
         rules: vec![(
             foreign_code_context_condition(next_config, project_path).await?,
@@ -448,7 +448,7 @@ pub async fn get_client_chunking_context(
         client_root.clone(),
         client_root_to_root_path,
         client_root.clone(),
-        client_root.join("static/chunks".into())?,
+        client_root.join("static/chunks")?,
         (*get_client_assets_path(client_root.clone()).await?).clone(),
         environment,
         next_mode.runtime_type(),
@@ -498,7 +498,7 @@ pub async fn get_client_chunking_context(
 
 #[turbo_tasks::function]
 pub fn get_client_assets_path(client_root: FileSystemPath) -> Result<Vc<FileSystemPath>> {
-    Ok(client_root.join("static/media".into())?.cell())
+    Ok(client_root.join("static/media")?.cell())
 }
 
 #[turbo_tasks::function]
@@ -529,7 +529,7 @@ pub async fn get_client_runtime_entries(
         // functions to be available.
         if let Some(request) = enable_react_refresh {
             runtime_entries.push(
-                RuntimeEntry::Request(request.to_resolved().await?, project_root.join("_".into())?)
+                RuntimeEntry::Request(request.to_resolved().await?, project_root.join("_")?)
                     .resolved_cell(),
             )
         };
@@ -543,7 +543,7 @@ pub async fn get_client_runtime_entries(
                 )))
                 .to_resolved()
                 .await?,
-                project_root.join("_".into())?,
+                project_root.join("_")?,
             )
             .resolved_cell(),
         );

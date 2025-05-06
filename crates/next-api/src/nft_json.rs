@@ -65,7 +65,7 @@ impl OutputAsset for NftJsonAsset {
             .fs
             .root()
             .await?
-            .join(format!("{}.nft.json", path.path).into())?
+            .join(&format!("{}.nft.json", path.path))?
             .cell())
     }
 }
@@ -121,7 +121,7 @@ impl Asset for NftJsonAsset {
             .project
             .project_path()
             .await?
-            .join(ident_folder.path.clone())?;
+            .join(&ident_folder.path)?;
 
         let chunk = this.chunk;
         let entries = this

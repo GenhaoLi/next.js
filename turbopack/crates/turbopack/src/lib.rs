@@ -798,7 +798,7 @@ impl AssetContext for ModuleAssetContext {
                                         .clone(),
                                 ) {
                                     let externals_context = externals_tracing_module_context(ty);
-                                    let root_origin = tracing_root.join("_".into())?;
+                                    let root_origin = tracing_root.join("_")?;
 
                                     // Normalize reference type, there is no such thing as a
                                     // `ReferenceType::EcmaScriptModules(ImportPart(Evaluation))`

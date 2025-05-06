@@ -56,7 +56,7 @@ pub async fn create_react_loadable_manifest(
     Ok(Vc::cell(match runtime {
         NextRuntime::NodeJs => vec![ResolvedVc::upcast(
             VirtualOutputAsset::new(
-                output_path.with_extension("json".into()),
+                output_path.with_extension("json"),
                 AssetContent::file(FileContent::Content(File::from(manifest_json)).cell()),
             )
             .to_resolved()
@@ -65,7 +65,7 @@ pub async fn create_react_loadable_manifest(
         NextRuntime::Edge => vec![
             ResolvedVc::upcast(
                 VirtualOutputAsset::new(
-                    output_path.with_extension("js".into()),
+                    output_path.with_extension("js"),
                     AssetContent::file(
                         FileContent::Content(File::from(format!(
                             "self.__REACT_LOADABLE_MANIFEST={};",
@@ -79,7 +79,7 @@ pub async fn create_react_loadable_manifest(
             ),
             ResolvedVc::upcast(
                 VirtualOutputAsset::new(
-                    output_path.with_extension("json".into()),
+                    output_path.with_extension("json"),
                     AssetContent::file(FileContent::Content(File::from(manifest_json)).cell()),
                 )
                 .to_resolved()

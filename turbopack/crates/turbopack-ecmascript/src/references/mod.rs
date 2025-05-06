@@ -700,7 +700,7 @@ pub(crate) async fn analyse_ecmascript_module_internal(
                 }
                 let origin_path = (*origin.origin_path().await?).clone();
                 if path.ends_with(".map") {
-                    let source_map_origin = origin_path.parent().join(path.into())?;
+                    let source_map_origin = origin_path.parent().join(path)?;
                     let reference = SourceMapReference::new(origin_path, source_map_origin)
                         .to_resolved()
                         .await?;
@@ -2138,7 +2138,7 @@ async fn handle_call<G: Fn(Vec<Effect>) + Send + Sync>(
                         .await?
                         .root()
                         .await?
-                        .join(s.trim_start_matches("/ROOT/").into())?;
+                        .join(s.trim_start_matches("/ROOT/"))?;
                     analysis.add_reference(
                         NodeGypBuildReference::new(
                             current_context,
@@ -3041,11 +3041,7 @@ async fn require_context_visitor(
         }
     };
 
-    let dir = origin
-        .origin_path()
-        .await?
-        .parent()
-        .join(options.dir.clone())?;
+    let dir = origin.origin_path().await?.parent().join(&options.dir)?;
 
     let map = RequireContextMap::generate(
         origin,

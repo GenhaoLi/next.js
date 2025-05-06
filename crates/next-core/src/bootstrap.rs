@@ -81,7 +81,7 @@ pub async fn bootstrap(
                     .ident()
                     .path()
                     .await?
-                    .join("bootstrap-config.ts".into())?
+                    .join("bootstrap-config.ts")?
                     .cell(),
                 AssetContent::file(
                     File::from(

@@ -502,20 +502,20 @@ impl EvaluateContext for WebpackLoaderContext {
                     .try_join();
                 let file_subscriptions = file_paths
                     .iter()
-                    .map(|p| async move { self.cwd.join(p.clone())?.read().await })
+                    .map(|p| async move { self.cwd.join(p)?.read().await })
                     .try_join();
                 let directory_subscriptions = directories
                     .iter()
                     .map(|(dir, glob)| async move {
                         self.cwd
-                            .join(dir.clone())?
+                            .join(dir)?
                             .track_glob(Glob::new(glob.clone()), false)
                             .await
                     })
                     .try_join();
                 let build_paths = build_file_paths
                     .iter()
-                    .map(|path| async move { self.cwd.join(path.clone()) })
+                    .map(|path| async move { self.cwd.join(path) })
                     .try_join();
                 let (resolved_build_paths, ..) = try_join!(
                     build_paths,
@@ -567,7 +567,7 @@ impl EvaluateContext for WebpackLoaderContext {
                 let Some(resolve_options_context) = self.resolve_options_context else {
                     bail!("Resolve options are not available in this context");
                 };
-                let lookup_path = self.cwd.join(lookup_path)?;
+                let lookup_path = self.cwd.join(&lookup_path)?;
                 let request = Request::parse(Value::new(Pattern::Constant(request)));
                 let options = resolve_options(lookup_path.clone(), *resolve_options_context);
 

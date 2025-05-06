@@ -35,7 +35,7 @@ pub async fn get_app_metadata_route_source(
         MetadataItem::Static { path } => static_route_source(mode, path.clone()),
         MetadataItem::Dynamic { path } => {
             let stem = path.file_stem();
-            let stem = stem.as_deref().unwrap_or_default();
+            let stem = stem.unwrap_or_default();
 
             if stem == "robots" || stem == "manifest" {
                 dynamic_text_route_source(path.clone())
@@ -132,7 +132,7 @@ async fn get_base64_file_content(path: FileSystemPath) -> Result<String> {
 #[turbo_tasks::function]
 async fn static_route_source(mode: NextMode, path: FileSystemPath) -> Result<Vc<Box<dyn Source>>> {
     let stem = path.file_stem();
-    let stem = stem.as_deref().unwrap_or_default();
+    let stem = stem.unwrap_or_default();
 
     let content_type = get_content_type(path.clone()).await?;
 
@@ -197,7 +197,7 @@ async fn static_route_source(mode: NextMode, path: FileSystemPath) -> Result<Vc<
     let file = File::from(code);
     let source = VirtualSource::new(
         path.parent()
-            .join(format!("{stem}--route-entry.js").into())?
+            .join(&format!("{stem}--route-entry.js"))?
             .cell(),
         AssetContent::file(file.into()),
     );
@@ -208,7 +208,7 @@ async fn static_route_source(mode: NextMode, path: FileSystemPath) -> Result<Vc<
 #[turbo_tasks::function]
 async fn dynamic_text_route_source(path: FileSystemPath) -> Result<Vc<Box<dyn Source>>> {
     let stem = path.file_stem();
-    let stem = stem.as_deref().unwrap_or_default();
+    let stem = stem.unwrap_or_default();
     let ext = &*path.extension();
 
     let content_type = get_content_type(path.clone()).await?;
@@ -251,7 +251,7 @@ async fn dynamic_text_route_source(path: FileSystemPath) -> Result<Vc<Box<dyn So
     let file = File::from(code);
     let source = VirtualSource::new(
         path.parent()
-            .join(format!("{stem}--route-entry.js").into())?
+            .join(&format!("{stem}--route-entry.js"))?
             .cell(),
         AssetContent::file(file.into()),
     );
@@ -266,7 +266,7 @@ async fn dynamic_site_map_route_source(
     is_multi_dynamic: bool,
 ) -> Result<Vc<Box<dyn Source>>> {
     let stem = path.file_stem();
-    let stem = stem.as_deref().unwrap_or_default();
+    let stem = stem.unwrap_or_default();
     let ext = &*path.extension();
     let content_type = get_content_type(path.clone()).await?;
     let mut static_generation_code = "";
@@ -346,7 +346,7 @@ async fn dynamic_site_map_route_source(
     let file = File::from(code);
     let source = VirtualSource::new(
         path.parent()
-            .join(format!("{stem}--route-entry.js").into())?
+            .join(&format!("{stem}--route-entry.js"))?
             .cell(),
         AssetContent::file(file.into()),
     );
@@ -357,7 +357,7 @@ async fn dynamic_site_map_route_source(
 #[turbo_tasks::function]
 async fn dynamic_image_route_source(path: FileSystemPath) -> Result<Vc<Box<dyn Source>>> {
     let stem = path.file_stem();
-    let stem = stem.as_deref().unwrap_or_default();
+    let stem = stem.unwrap_or_default();
     let ext = &*path.extension();
 
     let code = formatdoc! {
@@ -408,7 +408,7 @@ async fn dynamic_image_route_source(path: FileSystemPath) -> Result<Vc<Box<dyn S
     let file = File::from(code);
     let source = VirtualSource::new(
         path.parent()
-            .join(format!("{stem}--route-entry.js").into())?
+            .join(&format!("{stem}--route-entry.js"))?
             .cell(),
         AssetContent::file(file.into()),
     );

@@ -111,9 +111,9 @@ pub async fn get_metadata_route_name(meta: MetadataItem) -> Result<Vc<RcStr>> {
                 );
             };
 
-            match stem.as_str() {
+            match stem {
                 "manifest" => Vc::cell("manifest.webmanifest".into()),
-                _ => Vc::cell(stem.clone()),
+                _ => Vc::cell(RcStr::from(stem)),
             }
         }
     })
@@ -244,8 +244,8 @@ pub struct OptionAppDir(Option<FileSystemPath>);
 /// Finds and returns the [DirectoryTree] of the app directory if existing.
 #[turbo_tasks::function]
 pub async fn find_app_dir(project_path: FileSystemPath) -> Result<Vc<OptionAppDir>> {
-    let app = project_path.join("app".into())?;
-    let src_app = project_path.join("src/app".into())?;
+    let app = project_path.join("app")?;
+    let src_app = project_path.join("src/app")?;
     let app_dir = if *app.get_type().await? == FileSystemEntryType::Directory {
         app
     } else if *src_app.get_type().await? == FileSystemEntryType::Directory {
@@ -357,7 +357,7 @@ async fn get_directory_tree_internal(
                 let basename = file_name
                     .rsplit_once('.')
                     .map_or(file_name, |(basename, _)| basename);
-                let alt_path = file.parent().join(format!("{}.alt.txt", basename).into())?;
+                let alt_path = file.parent().join(&format!("{}.alt.txt", basename))?;
                 let alt_path = matches!(&*alt_path.get_type().await?, FileSystemEntryType::File)
                     .then_some(alt_path);
 
@@ -750,7 +750,7 @@ struct DuplicateParallelRouteIssue {
 impl Issue for DuplicateParallelRouteIssue {
     #[turbo_tasks::function]
     fn file_path(&self) -> Result<Vc<FileSystemPath>> {
-        Ok(self.app_dir.join(self.page.to_string().into())?.cell())
+        Ok(self.app_dir.join(&self.page.to_string())?.cell())
     }
 
     #[turbo_tasks::function]
@@ -874,21 +874,21 @@ async fn directory_tree_to_loader_tree_internal(
             modules.not_found = Some(
                 get_next_package(app_dir.clone())
                     .await?
-                    .join("dist/client/components/not-found-error.js".into())?,
+                    .join("dist/client/components/not-found-error.js")?,
             );
         }
         if modules.forbidden.is_none() {
             modules.forbidden = Some(
                 get_next_package(app_dir.clone())
                     .await?
-                    .join("dist/client/components/forbidden-error.js".into())?,
+                    .join("dist/client/components/forbidden-error.js")?,
             );
         }
         if modules.unauthorized.is_none() {
             modules.unauthorized = Some(
                 get_next_package(app_dir.clone())
                     .await?
-                    .join("dist/client/components/unauthorized-error.js".into())?,
+                    .join("dist/client/components/unauthorized-error.js")?,
             );
         }
     }
@@ -1080,7 +1080,7 @@ async fn default_route_tree(
                 default: Some(
                     get_next_package(app_dir)
                         .await?
-                        .join("dist/client/components/parallel-route-default.js".into())?,
+                        .join("dist/client/components/parallel-route-default.js")?,
                 ),
                 ..Default::default()
             }
@@ -1222,7 +1222,7 @@ async fn directory_tree_to_entrypoints_internal_untraced(
             modules.layout = Some(
                 get_next_package(app_dir.clone())
                     .await?
-                    .join("dist/client/components/default-layout.js".into())?,
+                    .join("dist/client/components/default-layout.js")?,
             );
         }
 
@@ -1230,21 +1230,21 @@ async fn directory_tree_to_entrypoints_internal_untraced(
             modules.not_found = Some(
                 get_next_package(app_dir.clone())
                     .await?
-                    .join("dist/client/components/not-found-error.js".into())?,
+                    .join("dist/client/components/not-found-error.js")?,
             );
         }
         if modules.forbidden.is_none() {
             modules.forbidden = Some(
                 get_next_package(app_dir.clone())
                     .await?
-                    .join("dist/client/components/forbidden-error.js".into())?,
+                    .join("dist/client/components/forbidden-error.js")?,
             );
         }
         if modules.unauthorized.is_none() {
             modules.unauthorized = Some(
                 get_next_package(app_dir.clone())
                     .await?
-                    .join("dist/client/components/unauthorized-error.js".into())?,
+                    .join("dist/client/components/unauthorized-error.js")?,
             );
         }
 
@@ -1267,7 +1267,7 @@ async fn directory_tree_to_entrypoints_internal_untraced(
                                     Some(v) => Some(v.clone()),
                                     None => Some(get_next_package(app_dir.clone())
                                         .await?
-                                        .join("dist/client/components/not-found-error.js".into())?),
+                                        .join("dist/client/components/not-found-error.js")?),
                                 },
                                 ..Default::default()
                             },

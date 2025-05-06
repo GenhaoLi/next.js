@@ -56,7 +56,7 @@ impl Source for WebAssemblySource {
             WebAssemblySourceType::Text => self
                 .source
                 .ident()
-                .with_path(self.source.ident().path().await?.append("_.wasm".into())?),
+                .with_path(self.source.ident().path().await?.append("_.wasm")?),
         })
     }
 }

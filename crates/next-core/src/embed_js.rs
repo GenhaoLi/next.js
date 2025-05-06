@@ -14,12 +14,12 @@ pub(crate) fn next_js_fs() -> Vc<Box<dyn FileSystem>> {
 
 #[turbo_tasks::function]
 pub(crate) async fn next_js_file(path: RcStr) -> Result<Vc<FileContent>> {
-    Ok(next_js_fs().root().await?.join(path)?.read())
+    Ok(next_js_fs().root().await?.join(&path)?.read())
 }
 
 #[turbo_tasks::function]
 pub(crate) async fn next_js_file_path(path: RcStr) -> Result<Vc<FileSystemPath>> {
-    Ok(next_js_fs().root().await?.join(path)?.cell())
+    Ok(next_js_fs().root().await?.join(&path)?.cell())
 }
 
 #[turbo_tasks::function]

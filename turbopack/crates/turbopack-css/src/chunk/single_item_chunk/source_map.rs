@@ -39,7 +39,7 @@ impl OutputAsset for SingleItemCssChunkSourceMapAsset {
                 ".single.css".into(),
             )
             .await?
-            .append(".map".into())?
+            .append(".map")?
             .cell())
     }
 }

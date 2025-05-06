@@ -32,7 +32,7 @@ pub async fn maybe_add_babel_loader(
     let has_babel_config = {
         let mut has_babel_config = false;
         for &filename in BABEL_CONFIG_FILES {
-            let filetype = *project_root.join(filename.into())?.get_type().await?;
+            let filetype = *project_root.join(filename)?.get_type().await?;
             if matches!(filetype, FileSystemEntryType::File) {
                 has_babel_config = true;
                 break;

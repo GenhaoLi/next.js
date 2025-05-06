@@ -160,7 +160,7 @@ pub async fn get_server_resolve_options_context(
     // Always load these predefined packages as external.
     let mut external_packages: Vec<RcStr> = load_next_js_templateon(
         project_path.clone(),
-        "dist/lib/server-external-packages.json".into(),
+        "dist/lib/server-external-packages.json",
     )
     .await?;
 
@@ -337,7 +337,7 @@ pub async fn get_server_resolve_options_context(
             .typescript_tsconfig_path()
             .await?
             .as_ref()
-            .map(|p| project_path.join(p.to_owned()))
+            .map(|p| project_path.join(p))
             .transpose()?,
         rules: vec![(
             foreign_code_context_condition,
@@ -1006,8 +1006,8 @@ pub async fn get_server_chunking_context_with_client_assets(
         node_root.clone(),
         node_root_to_root_path,
         client_root.clone(),
-        node_root.join("server/chunks/ssr".into())?,
-        client_root.join("static/media".into())?,
+        node_root.join("server/chunks/ssr")?,
+        client_root.join("static/media")?,
         environment,
         next_mode.runtime_type(),
     )
@@ -1073,8 +1073,8 @@ pub async fn get_server_chunking_context(
         node_root.clone(),
         node_root_to_root_path,
         node_root.clone(),
-        node_root.join("server/chunks".into())?,
-        node_root.join("server/assets".into())?,
+        node_root.join("server/chunks")?,
+        node_root.join("server/assets")?,
         environment,
         next_mode.runtime_type(),
     )

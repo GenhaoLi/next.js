@@ -257,22 +257,21 @@ async fn source(
     browserslist_query: RcStr,
 ) -> Result<Vc<Box<dyn ContentSource>>> {
     let project_relative = project_dir.strip_prefix(&*root_dir).unwrap();
-    let project_relative: RcStr = project_relative
+    let project_relative = project_relative
         .strip_prefix(MAIN_SEPARATOR)
         .unwrap_or(project_relative)
-        .replace(MAIN_SEPARATOR, "/")
-        .into();
+        .replace(MAIN_SEPARATOR, "/");
 
     let output_fs = output_fs(project_dir);
     let fs: Vc<Box<dyn FileSystem>> = project_fs(root_dir);
     let root_path = (*fs.root().await?).clone();
-    let project_path = root_path.join(project_relative)?;
+    let project_path = root_path.join(&project_relative)?;
 
     let env = load_env(root_path.clone().cell());
-    let build_output_root = output_fs.root().await?.join(".turbopack/build".into())?;
+    let build_output_root = output_fs.root().await?.join(".turbopack/build")?;
 
     let build_output_root_to_root_path = project_path
-        .join(".turbopack/build".into())?
+        .join(".turbopack/build")?
         .get_relative_path_to(&root_path)
         .context("Project path is in root path")?;
     let build_output_root_to_root_path = ResolvedVc::cell(build_output_root_to_root_path);
@@ -282,8 +281,8 @@ async fn source(
         build_output_root.clone(),
         build_output_root_to_root_path,
         build_output_root.clone(),
-        build_output_root.join("chunks".into())?,
-        build_output_root.join("assets".into())?,
+        build_output_root.join("chunks")?,
+        build_output_root.join("assets")?,
         node_build_environment().to_resolved().await?,
         RuntimeType::Development,
     )
@@ -327,7 +326,7 @@ async fn source(
     .to_resolved()
     .await?;
     let static_source = ResolvedVc::upcast(
-        StaticAssetsContentSource::new(Default::default(), project_path.join("public".into())?)
+        StaticAssetsContentSource::new(Default::default(), project_path.join("public")?)
             .to_resolved()
             .await?,
     );

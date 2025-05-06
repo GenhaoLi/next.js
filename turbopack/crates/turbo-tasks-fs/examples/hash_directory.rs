@@ -37,7 +37,7 @@ async fn main() -> Result<()> {
 
             // Smart Pointer cast
             let fs: Vc<Box<dyn FileSystem>> = Vc::upcast(disk_fs);
-            let input = fs.root().await?.join("demo".into())?;
+            let input = fs.root().await?.join("demo")?;
             let dir_hash = hash_directory(input);
             print_hash(dir_hash).await?;
             Ok::<Vc<()>, _>(Default::default())

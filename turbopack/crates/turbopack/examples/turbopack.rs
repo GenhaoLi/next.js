@@ -38,9 +38,9 @@ async fn main() -> Result<()> {
 
             // Smart Pointer cast
             let fs: Vc<Box<dyn FileSystem>> = Vc::upcast(disk_fs);
-            let input = fs.root().await?.join("demo".into())?;
-            let output = fs.root().await?.join("out".into())?;
-            let entry = fs.root().await?.join("demo/index.js".into())?;
+            let input = fs.root().await?.join("demo")?;
+            let output = fs.root().await?.join("out")?;
+            let entry = fs.root().await?.join("demo/index.js")?;
 
             let source = FileSource::new(entry);
             let module_asset_context = turbopack::ModuleAssetContext::new(

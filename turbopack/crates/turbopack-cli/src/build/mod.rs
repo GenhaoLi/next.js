@@ -207,13 +207,13 @@ async fn build_internal(
         .replace(MAIN_SEPARATOR, "/")
         .into();
     let root_path = (*project_fs.root().await?).clone();
-    let project_path = root_path.join(project_relative)?;
-    let build_output_root = output_fs.root().await?.join("dist".into())?;
+    let project_path = root_path.join(&project_relative)?;
+    let build_output_root = output_fs.root().await?.join("dist")?;
 
     let node_env = NodeEnv::Production.cell();
 
     let build_output_root_to_root_path = project_path
-        .join("dist".into())?
+        .join("dist")?
         .get_relative_path_to(&root_path)
         .context("Project path is in root path")?;
 
@@ -275,7 +275,7 @@ async fn build_internal(
         .await?)
         .to_vec();
 
-    let origin = PlainResolveOrigin::new(asset_context, project_fs.root().await?.join("_".into())?);
+    let origin = PlainResolveOrigin::new(asset_context, project_fs.root().await?.join("_")?);
     let project_dir = &project_dir;
     let entries = async move {
         entry_requests
@@ -431,11 +431,9 @@ async fn build_internal(
                                                         .path()
                                                         .await?
                                                         .file_stem()
-                                                        .as_deref()
-                                                        .unwrap()
-                                                        .into(),
+                                                        .unwrap(),
                                                 )?
-                                                .with_extension("entry.js".into()),
+                                                .with_extension("entry.js"),
                                         ),
                                         ChunkGroup::Entry(
                                             [ResolvedVc::upcast(ecmascript)].into_iter().collect(),
@@ -456,11 +454,9 @@ async fn build_internal(
                                                     .path()
                                                     .await?
                                                     .file_stem()
-                                                    .as_deref()
-                                                    .unwrap()
-                                                    .into(),
+                                                    .unwrap(),
                                             )?
-                                            .with_extension("entry.js".into()),
+                                            .with_extension("entry.js"),
                                         EvaluatableAssets::one(*ResolvedVc::upcast(ecmascript)),
                                         module_graph,
                                         OutputAssets::empty(),

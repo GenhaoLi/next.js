@@ -149,7 +149,7 @@ impl MiddlewareEndpoint {
                 this.project
                     .node_root()
                     .await?
-                    .join("server/middleware.js".into())?,
+                    .join("server/middleware.js")?,
                 get_server_runtime_entries(
                     Value::new(ServerContextType::Middleware {
                         app_dir: this.app_dir.clone(),
@@ -260,7 +260,7 @@ impl MiddlewareEndpoint {
                 this.project
                     .node_root()
                     .await?
-                    .join("server/middleware/middleware-manifest.json".into())?,
+                    .join("server/middleware/middleware-manifest.json")?,
                 AssetContent::file(
                     FileContent::Content(File::from(serde_json::to_string_pretty(
                         &middleware_manifest_v2,
@@ -320,7 +320,7 @@ impl MiddlewareEndpoint {
                 ..Default::default()
             };
             let middleware_manifest_v2 = VirtualOutputAsset::new(
-                node_root.join("server/middleware/middleware-manifest.json".into())?,
+                node_root.join("server/middleware/middleware-manifest.json")?,
                 AssetContent::file(
                     FileContent::Content(File::from(serde_json::to_string_pretty(
                         &middleware_manifest_v2,

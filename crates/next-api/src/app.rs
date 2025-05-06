@@ -822,7 +822,7 @@ impl AppProject {
         let client_main_module = cjs_resolve(
             Vc::upcast(PlainResolveOrigin::new(
                 client_module_context,
-                (*self.project().project_path().await?).join("_".into())?,
+                (*self.project().project_path().await?).join("_")?,
             )),
             Request::parse(Value::new(Pattern::Constant(
                 "next/dist/client/app-next-turbopack.js".into(),
@@ -902,8 +902,7 @@ impl AppProject {
                             should_trace,
                         );
                         graphs.push(graph);
-                        let is_layout =
-                            module.server_path().await?.file_stem().as_deref() == Some("layout");
+                        let is_layout = module.server_path().await?.file_stem() == Some("layout");
                         visited_modules = if is_layout {
                             // Only propagate the visited_modules of the parent layout(s), not
                             // across siblings such as loading.js and
@@ -1188,7 +1187,7 @@ impl AppEndpoint {
 
         let node_root = (*project.node_root().await?).clone();
         let client_relative_path = (*project.client_relative_path().await?).clone();
-        let server_path = node_root.join("server".into())?;
+        let server_path = node_root.join("server")?;
 
         let mut server_assets = fxindexset![];
         let mut client_assets = fxindexset![];
@@ -1313,9 +1312,9 @@ impl AppEndpoint {
             };
             let app_build_manifest_output = app_build_manifest
                 .build_output(
-                    node_root.join(
-                        format!("server/app{manifest_path_prefix}/app-build-manifest.json",).into(),
-                    )?,
+                    node_root.join(&format!(
+                        "server/app{manifest_path_prefix}/app-build-manifest.json"
+                    ))?,
                     client_relative_path.clone(),
                 )
                 .await?
@@ -1329,7 +1328,7 @@ impl AppEndpoint {
         // load it as a RawModule.
         let next_package = get_next_package((*project.project_path().await?).clone()).await?;
         let polyfill_source =
-            FileSource::new(next_package.join("dist/build/polyfills/polyfill-nomodule.js".into())?);
+            FileSource::new(next_package.join("dist/build/polyfills/polyfill-nomodule.js")?);
         let polyfill_output_path = (*client_chunking_context
             .chunk_path(
                 Some(Vc::upcast(polyfill_source)),
@@ -1355,9 +1354,9 @@ impl AppEndpoint {
                 let webpack_stats =
                     generate_webpack_stats(app_entry.original_name.clone(), &client_assets).await?;
                 let stats_output = VirtualOutputAsset::new(
-                    node_root.join(
-                        format!("server/app{manifest_path_prefix}/webpack-stats.json",).into(),
-                    )?,
+                    node_root.join(&format!(
+                        "server/app{manifest_path_prefix}/webpack-stats.json"
+                    ))?,
                     AssetContent::file(
                         File::from(serde_json::to_string_pretty(&webpack_stats)?).into(),
                     ),
@@ -1375,9 +1374,9 @@ impl AppEndpoint {
             let build_manifest_output = ResolvedVc::upcast(
                 build_manifest
                     .build_output(
-                        node_root.join(
-                            format!("server/app{manifest_path_prefix}/build-manifest.json",).into(),
-                        )?,
+                        node_root.join(&format!(
+                            "server/app{manifest_path_prefix}/build-manifest.json",
+                        ))?,
                         client_relative_path.clone(),
                     )
                     .await?
@@ -1537,13 +1536,10 @@ impl AppEndpoint {
                     let loadable_manifest_output = create_react_loadable_manifest(
                         *dynamic_import_entries,
                         client_relative_path.clone(),
-                        node_root.join(
-                            format!(
-                                "server/app{}/react-loadable-manifest",
-                                &app_entry.original_name
-                            )
-                            .into(),
-                        )?,
+                        node_root.join(&format!(
+                            "server/app{}/react-loadable-manifest",
+                            &app_entry.original_name
+                        ))?,
                         NextRuntime::Edge,
                     )
                     .await?;
@@ -1585,12 +1581,9 @@ impl AppEndpoint {
                     let manifest_path_prefix = &app_entry.original_name;
                     let middleware_manifest_v2 = ResolvedVc::upcast(
                         VirtualOutputAsset::new(
-                            node_root.join(
-                                format!(
-                                    "server/app{manifest_path_prefix}/middleware-manifest.json",
-                                )
-                                .into(),
-                            )?,
+                            node_root.join(&format!(
+                                "server/app{manifest_path_prefix}/middleware-manifest.json",
+                            ))?,
                             AssetContent::file(
                                 FileContent::Content(File::from(serde_json::to_string_pretty(
                                     &middleware_manifest_v2,
@@ -1657,13 +1650,10 @@ impl AppEndpoint {
                     let loadable_manifest_output = create_react_loadable_manifest(
                         *dynamic_import_entries,
                         client_relative_path.clone(),
-                        node_root.join(
-                            format!(
-                                "server/app{}/react-loadable-manifest",
-                                &app_entry.original_name
-                            )
-                            .into(),
-                        )?,
+                        node_root.join(&format!(
+                            "server/app{}/react-loadable-manifest",
+                            &app_entry.original_name
+                        ))?,
                         NextRuntime::NodeJs,
                     )
                     .await?;
@@ -1852,13 +1842,10 @@ impl AppEndpoint {
                     anyhow::Ok(Vc::cell(vec![
                         chunking_context
                             .entry_chunk_group_asset(
-                                server_path.join(
-                                    format!(
-                                        "app{original_name}.js",
-                                        original_name = app_entry.original_name
-                                    )
-                                    .into(),
-                                )?,
+                                server_path.join(&format!(
+                                    "app{original_name}.js",
+                                    original_name = app_entry.original_name
+                                ))?,
                                 Vc::cell(evaluatable_assets),
                                 module_graph,
                                 current_chunks,
@@ -1881,8 +1868,9 @@ async fn create_app_paths_manifest(
     filename: RcStr,
 ) -> Result<ResolvedVc<Box<dyn OutputAsset>>> {
     let manifest_path_prefix = original_name;
-    let path = node_root
-        .join(format!("server/app{manifest_path_prefix}/app-paths-manifest.json",).into())?;
+    let path = node_root.join(&format!(
+        "server/app{manifest_path_prefix}/app-paths-manifest.json"
+    ))?;
     let app_paths_manifest = AppPathsManifest {
         node_server_app_paths: PagesManifest {
             pages: [(original_name.into(), filename)].into_iter().collect(),

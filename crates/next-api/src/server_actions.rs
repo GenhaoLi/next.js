@@ -129,8 +129,7 @@ pub(crate) async fn build_server_actions_loader(
         )?;
     }
 
-    let path =
-        project_path.join(format!(".next-internal/server/app{page_name}/actions.js").into())?;
+    let path = project_path.join(&format!(".next-internal/server/app{page_name}/actions.js"))?;
     let file = File::from(contents.build());
     let source = VirtualSource::new_with_ident(
         AssetIdent::from_path(path).with_modifier(server_actions_loader_modifier()),
@@ -164,8 +163,9 @@ async fn build_manifest(
     async_module_info: Vc<AsyncModulesInfo>,
 ) -> Result<ResolvedVc<Box<dyn OutputAsset>>> {
     let manifest_path_prefix = &page_name;
-    let manifest_path = node_root
-        .join(format!("server/app{manifest_path_prefix}/server-reference-manifest.json",).into())?;
+    let manifest_path = node_root.join(&format!(
+        "server/app{manifest_path_prefix}/server-reference-manifest.json"
+    ))?;
     let mut manifest = ServerReferenceManifest {
         ..Default::default()
     };
@@ -219,7 +219,7 @@ pub async fn to_rsc_context(
             .await?
             .root()
             .await?
-            .join(entry_path.into())?,
+            .join(entry_path)?,
         Vc::cell(entry_query.into()),
     );
     let module = asset_context

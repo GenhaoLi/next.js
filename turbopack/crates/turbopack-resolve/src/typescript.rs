@@ -240,7 +240,7 @@ async fn join_base_url(
     base_url: RcStr,
     source: ResolvedVc<Box<dyn Source>>,
 ) -> Result<Vc<OptionFileSystemPath>> {
-    let parent = source.ident().path().await?.parent().try_join(base_url)?;
+    let parent = source.ident().path().await?.parent().try_join(&base_url)?;
     Ok(Vc::cell(parent))
 }
 
@@ -278,7 +278,7 @@ pub async fn tsconfig_resolve_options(
             if let JsonValue::Object(paths) = &json["compilerOptions"]["paths"] {
                 let mut context_dir = source.ident().path().await?.parent();
                 if let Some(base_url) = json["compilerOptions"]["baseUrl"].as_str() {
-                    if let Some(new_context) = context_dir.try_join(base_url.into())? {
+                    if let Some(new_context) = context_dir.try_join(base_url)? {
                         context_dir = new_context;
                     }
                 };

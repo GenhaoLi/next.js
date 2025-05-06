@@ -195,7 +195,7 @@ async fn separate_assets_operation(
 fn emit_package_json(dir: FileSystemPath) -> Result<Vc<()>> {
     Ok(emit(
         Vc::upcast(VirtualOutputAsset::new(
-            dir.join("package.json".into())?,
+            dir.join("package.json")?,
             AssetContent::file(File::from("{\"type\": \"commonjs\"}").into()),
         )),
         dir,

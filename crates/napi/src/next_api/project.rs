@@ -1270,17 +1270,13 @@ pub async fn get_source_map_rope(
         return Ok(OptionStringifiedSourceMap::none());
     };
 
-    let server_path = container
-        .project()
-        .node_root()
-        .await?
-        .join(chunk_base.into())?;
+    let server_path = container.project().node_root().await?.join(chunk_base)?;
 
     let client_path = container
         .project()
         .client_relative_path()
         .await?
-        .join(chunk_base.into())?;
+        .join(chunk_base)?;
 
     let mut map = container.get_source_map(server_path, module.clone());
 
@@ -1436,7 +1432,7 @@ pub async fn project_get_source_for_asset(
                 .fs()
                 .root()
                 .await?
-                .join(file_path.clone().into())?
+                .join(&file_path)?
                 .read()
                 .await?;
 

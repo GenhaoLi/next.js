@@ -158,7 +158,7 @@ impl EcmascriptClientReferenceModule {
                     // module next to the original code, so its parsing will be
                     // affected by `type` fields in package.json --
                     // a bare `proxy.js` may end up being unexpectedly parsed as the wrong format.
-                    format!("proxy.{}", if is_esm { "mjs" } else { "cjs" }).into(),
+                    &format!("proxy.{}", if is_esm { "mjs" } else { "cjs" }),
                 )?
                 .cell(),
             proxy_module_content,

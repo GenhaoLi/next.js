@@ -49,7 +49,7 @@ pub async fn dynamic_image_metadata_source(
     page: AppPage,
 ) -> Result<Vc<Box<dyn Source>>> {
     let stem = path.file_stem();
-    let stem = stem.as_deref().unwrap_or_default();
+    let stem = stem.unwrap_or_default();
     let ext = &*path.extension();
 
     let hash_query = format!("?{:x}", hash_file_content(path.clone()).await?);
@@ -138,9 +138,7 @@ pub async fn dynamic_image_metadata_source(
 
     let file = File::from(code);
     let source = VirtualSource::new(
-        path.parent()
-            .join(format!("{stem}--metadata.js").into())?
-            .cell(),
+        path.parent().join(&format!("{stem}--metadata.js"))?.cell(),
         AssetContent::file(file.into()),
     );
 

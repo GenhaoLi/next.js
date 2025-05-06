@@ -123,20 +123,18 @@ pub async fn resolve_node_pre_gyp_files(
                         PLATFORM_TEMPLATE.replace(&native_binding_path, platform.as_str());
                     let native_binding_path =
                         ARCH_TEMPLATE.replace(&native_binding_path, compile_target.arch.as_str());
-                    let native_binding_path: RcStr = LIBC_TEMPLATE
-                        .replace(
-                            &native_binding_path,
-                            // node-pre-gyp only cares about libc on linux
-                            if platform == Platform::Linux {
-                                compile_target.libc.as_str()
-                            } else {
-                                "unknown"
-                            },
-                        )
-                        .into();
+                    let native_binding_path = LIBC_TEMPLATE.replace(
+                        &native_binding_path,
+                        // node-pre-gyp only cares about libc on linux
+                        if platform == Platform::Linux {
+                            compile_target.libc.as_str()
+                        } else {
+                            "unknown"
+                        },
+                    );
 
                     for (key, entry) in config_file_dir
-                        .join(native_binding_path.clone())?
+                        .join(&native_binding_path)?
                         .read_glob(
                             Glob::new(format!("*.{}", compile_target.dylib_ext()).into()),
                             false,
@@ -159,7 +157,7 @@ pub async fn resolve_node_pre_gyp_files(
                         native_binding_path, node_pre_gyp_config.binary.module_name
                     )
                     .into();
-                    let resolved_file_vc = config_file_dir.join(node_file_path.clone())?;
+                    let resolved_file_vc = config_file_dir.join(&node_file_path)?;
                     if *resolved_file_vc.get_type().await? == FileSystemEntryType::File {
                         sources.insert(
                             node_file_path,
@@ -170,7 +168,7 @@ pub async fn resolve_node_pre_gyp_files(
                 for (key, entry) in config_file_dir
                     // TODO
                     // read the dependencies path from `bindings.gyp`
-                    .join("deps/lib".into())?
+                    .join("deps/lib")?
                     .read_glob(Glob::new("*".into()), false)
                     .await?
                     .results
@@ -284,7 +282,7 @@ pub async fn resolve_node_gyp_build_files(
                         FxIndexMap::with_capacity_and_hasher(captured.len(), Default::default());
                     for found in captured.iter().skip(1).flatten() {
                         let name = found.as_str();
-                        let target_path = context_dir.join("build/Release".into())?;
+                        let target_path = context_dir.join("build/Release")?;
                         let resolved_prebuilt_file = resolve_raw(
                             target_path,
                             Pattern::new(Pattern::Constant(format!("{}.node", name).into())),
@@ -415,7 +413,7 @@ pub async fn resolve_node_bindings_files(
     let try_path = |sub_path: RcStr| {
         let root_context_dir = root_context_dir.clone();
         async move {
-            let path = root_context_dir.join(sub_path.clone())?;
+            let path = root_context_dir.join(&sub_path)?;
             Ok(
                 if matches!(*path.get_type().await?, FileSystemEntryType::File) {
                     Some((

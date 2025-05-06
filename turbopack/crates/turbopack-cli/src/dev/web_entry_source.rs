@@ -45,8 +45,8 @@ pub async fn get_client_chunking_context(
             server_root.clone(),
             server_root_to_root_path,
             server_root.clone(),
-            server_root.join("/_chunks".into())?,
-            server_root.join("/_assets".into())?,
+            server_root.join("/_chunks")?,
+            server_root.join("/_assets")?,
             environment,
             RuntimeType::Development,
         )
@@ -75,7 +75,7 @@ pub async fn get_client_runtime_entries(
     // functions to be available.
     if let Some(request) = enable_react_refresh {
         runtime_entries.push(
-            RuntimeEntry::Request(request.to_resolved().await?, project_path.join("_".into())?)
+            RuntimeEntry::Request(request.to_resolved().await?, project_path.join("_")?)
                 .resolved_cell(),
         )
     };
@@ -125,7 +125,7 @@ pub async fn create_web_entry_source(
 
     let runtime_entries = entries.resolve_entries(asset_context);
 
-    let origin = PlainResolveOrigin::new(asset_context, root_path.join("_".into())?);
+    let origin = PlainResolveOrigin::new(asset_context, root_path.join("_")?);
     let entries = entry_requests
         .into_iter()
         .map(|request| async move {
@@ -193,10 +193,7 @@ pub async fn create_web_entry_source(
         .try_join()
         .await?;
 
-    let entry_asset = Vc::upcast(DevHtmlAsset::new(
-        server_root.join("index.html".into())?,
-        entries,
-    ));
+    let entry_asset = Vc::upcast(DevHtmlAsset::new(server_root.join("index.html")?, entries));
 
     let graph = Vc::upcast(if eager_compile {
         AssetGraphContentSource::new_eager(server_root, entry_asset)

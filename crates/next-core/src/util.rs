@@ -102,11 +102,8 @@ pub async fn get_transpiled_packages(
 ) -> Result<Vc<Vec<RcStr>>> {
     let mut transpile_packages: Vec<RcStr> = next_config.transpile_packages().owned().await?;
 
-    let default_transpiled_packages: Vec<RcStr> = load_next_js_templateon(
-        project_path,
-        "dist/lib/default-transpiled-packages.json".into(),
-    )
-    .await?;
+    let default_transpiled_packages: Vec<RcStr> =
+        load_next_js_templateon(project_path, "dist/lib/default-transpiled-packages.json").await?;
 
     transpile_packages.extend(default_transpiled_packages.iter().cloned());
 
@@ -126,7 +123,7 @@ pub async fn foreign_code_context_condition(
     let not_next_template_dir = ContextCondition::not(ContextCondition::InPath(
         get_next_package(project_path.clone())
             .await?
-            .join(NEXT_TEMPLATE_PATH.into())?,
+            .join(NEXT_TEMPLATE_PATH)?,
     ));
 
     let result = ContextCondition::all(vec![
@@ -938,16 +935,14 @@ pub async fn virtual_next_js_template_path(
     debug_assert!(!file.contains('/'));
     get_next_package(project_path)
         .await?
-        .join(format!("{NEXT_TEMPLATE_PATH}/{file}").into())
+        .join(&format!("{NEXT_TEMPLATE_PATH}/{file}"))
 }
 
 pub async fn load_next_js_templateon<T: DeserializeOwned>(
     project_path: FileSystemPath,
-    path: RcStr,
+    path: &str,
 ) -> Result<T> {
-    let file_path = get_next_package(project_path.clone())
-        .await?
-        .join(path.clone())?;
+    let file_path = get_next_package(project_path.clone()).await?.join(path)?;
 
     let content = &*file_path.read().await?;
 

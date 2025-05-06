@@ -1284,7 +1284,7 @@ pub async fn find_context_file(
 ) -> Result<Vc<FindContextFileResult>> {
     let mut refs = Vec::new();
     for name in &*names.await? {
-        let fs_path = lookup_path.join(name.clone())?;
+        let fs_path = lookup_path.join(name)?;
         if let Some(fs_path) = exists(fs_path, &mut refs).await? {
             return Ok(FindContextFileResult::Found(fs_path, refs).cell());
         }
@@ -1324,7 +1324,7 @@ pub async fn find_context_file_or_package_key(
     package_key: Value<RcStr>,
 ) -> Result<Vc<FindContextFileResult>> {
     let mut refs = Vec::new();
-    let package_json_path = lookup_path.join("package.json".into())?;
+    let package_json_path = lookup_path.join("package.json")?;
     if let Some(package_json_path) = exists(package_json_path, &mut refs).await? {
         if let Some(json) = &*read_package_json(package_json_path.clone()).await? {
             if json.get(&**package_key).is_some() {
@@ -1333,7 +1333,7 @@ pub async fn find_context_file_or_package_key(
         }
     }
     for name in &*names.await? {
-        let fs_path = lookup_path.join(name.clone())?;
+        let fs_path = lookup_path.join(name)?;
         if let Some(fs_path) = exists(fs_path, &mut refs).await? {
             return Ok(FindContextFileResult::Found(fs_path, refs).into());
         }
@@ -1390,9 +1390,9 @@ async fn find_package(
                 let root = root_vc;
                 while lookup_path_value.is_inside_ref(root) {
                     for name in names.iter() {
-                        let fs_path = lookup_path.join(name.clone())?;
+                        let fs_path = lookup_path.join(name)?;
                         if let Some(fs_path) = dir_exists(fs_path, &mut affecting_sources).await? {
-                            let fs_path = fs_path.join(package_name.clone())?;
+                            let fs_path = fs_path.join(&package_name)?;
                             if let Some(fs_path) =
                                 dir_exists(fs_path, &mut affecting_sources).await?
                             {
@@ -1413,7 +1413,7 @@ async fn find_package(
                 excluded_extensions,
             } => {
                 let excluded_extensions = excluded_extensions.await?;
-                let package_dir = dir.join(package_name.clone())?;
+                let package_dir = dir.join(&package_name)?;
                 if let Some((ty, package_dir)) =
                     any_exists(package_dir.clone(), &mut affecting_sources).await?
                 {
@@ -1431,7 +1431,7 @@ async fn find_package(
                     if excluded_extensions.contains(extension) {
                         continue;
                     }
-                    let package_file = package_dir.append(extension.clone())?;
+                    let package_file = package_dir.append(extension)?;
                     if let Some(package_file) = exists(package_file, &mut affecting_sources).await?
                     {
                         packages.push(FindPackageItem::PackageFile(package_file));
@@ -2121,7 +2121,7 @@ async fn resolve_into_folder(
     package_path: FileSystemPath,
     options: Vc<ResolveOptions>,
 ) -> Result<Vc<ResolveResult>> {
-    let package_json_path = package_path.join("package.json".into())?;
+    let package_json_path = package_path.join("package.json")?;
     let options_value = options.await?;
 
     for resolve_into_package in options_value.into_package.iter() {
@@ -2681,7 +2681,7 @@ async fn resolve_into_package(
                 conditions,
                 unspecified_conditions,
             } => {
-                let package_json_path = package_path.join("package.json".into())?;
+                let package_json_path = package_path.join("package.json")?;
                 let ExportsFieldResult::Some(exports_field) =
                     &*exports_field(package_json_path.clone()).await?
                 else {

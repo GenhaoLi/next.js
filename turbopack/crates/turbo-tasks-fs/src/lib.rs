@@ -664,7 +664,7 @@ impl FileSystem for DiskFileSystem {
             let link_path_unix: RcStr = sys_to_unix(&link_path_string_cow).into();
             (
                 link_path_unix.clone(),
-                fs_path.parent().join(link_path_unix)?.get_type().await?,
+                fs_path.parent().join(&link_path_unix)?.get_type().await?,
             )
         };
 
@@ -1182,7 +1182,7 @@ impl FileSystemPath {
 
         Ok(Cow::Owned(FileSystemPath {
             fs: self.fs,
-            path: RcStr::from(path_str),
+            path: path_str.into(),
         }))
     }
 }
@@ -1222,8 +1222,8 @@ impl FileSystemPath {
     /// Adds a subpath to the current path. The /-separate path argument might
     /// contain ".." or "." seqments, but it must not leave the root of the
     /// filesystem.
-    pub fn join(&self, path: RcStr) -> Result<Self> {
-        if let Some(path) = join_path(&self.path, &path) {
+    pub fn join(&self, path: &str) -> Result<Self> {
+        if let Some(path) = join_path(&self.path, path) {
             Ok(Self::new_normalized(self.fs, path.into()))
         } else {
             bail!(
@@ -1235,7 +1235,7 @@ impl FileSystemPath {
     }
 
     /// Adds a suffix to the filename. [path] must not contain `/`.
-    pub fn append(&self, path: RcStr) -> Result<Self> {
+    pub fn append(&self, path: &str) -> Result<Self> {
         if path.contains('/') {
             bail!(
                 "FileSystemPath(\"{}\").append(\"{}\") must not append '/'",
@@ -1251,7 +1251,7 @@ impl FileSystemPath {
 
     /// Adds a suffix to the basename of the filename. [appending] must not
     /// contain `/`. Extension will stay intact.
-    pub fn append_to_stem(&self, appending: RcStr) -> Result<Self> {
+    pub fn append_to_stem(&self, appending: &str) -> Result<Self> {
         if appending.contains('/') {
             bail!(
                 "FileSystemPath(\"{}\").append_to_stem(\"{}\") must not append '/'",
@@ -1273,12 +1273,12 @@ impl FileSystemPath {
 
     /// Similar to [FileSystemPath::join], but returns an Option that will be
     /// None when the joined path would leave the filesystem root.
-    pub fn try_join(&self, path: RcStr) -> Result<Option<Self>> {
+    pub fn try_join(&self, path: &str) -> Result<Option<Self>> {
         // TODO(PACK-3279): Remove this once we do not produce invalid paths at the first place.
         #[cfg(target_os = "windows")]
         let path = path.replace('\\', "/");
 
-        if let Some(path) = join_path(&self.path, &path) {
+        if let Some(path) = join_path(&self.path, path) {
             Ok(Some(Self::new_normalized(self.fs, path.into())))
         } else {
             Ok(None)
@@ -1287,8 +1287,8 @@ impl FileSystemPath {
 
     /// Similar to [FileSystemPath::join], but returns an Option that will be
     /// None when the joined path would leave the current path.
-    pub fn try_join_inside(&self, path: RcStr) -> Result<Option<Self>> {
-        if let Some(path) = join_path(&self.path, &path) {
+    pub fn try_join_inside(&self, path: &str) -> Result<Option<Self>> {
+        if let Some(path) = join_path(&self.path, path) {
             if path.starts_with(&*self.path) {
                 return Ok(Some(Self::new_normalized(self.fs, path.into())));
             }
@@ -1307,7 +1307,7 @@ impl FileSystemPath {
     }
 
     pub fn root(&self) -> Vc<Self> {
-        self.fs().root()
+        self.fs.root()
     }
 
     pub fn fs(&self) -> Vc<Box<dyn FileSystem>> {
@@ -1328,7 +1328,7 @@ impl FileSystemPath {
 
     /// Creates a new [`FileSystemPath`] like `self` but with the given
     /// extension.
-    pub fn with_extension(&self, extension: RcStr) -> FileSystemPath {
+    pub fn with_extension(&self, extension: &str) -> FileSystemPath {
         let (path_without_extension, _) = self.split_extension();
         Self::new_normalized(
             self.fs,
@@ -1349,12 +1349,12 @@ impl FileSystemPath {
     /// * The entire file name if there is no embedded `.`;
     /// * The entire file name if the file name begins with `.` and has no other `.`s within;
     /// * Otherwise, the portion of the file name before the final `.`
-    pub fn file_stem(&self) -> Option<RcStr> {
+    pub fn file_stem(&self) -> Option<&str> {
         let (_, file_stem, _) = self.split_file_stem_extension();
         if file_stem.is_empty() {
             return None;
         }
-        Some(file_stem.into())
+        Some(file_stem)
     }
 
     /// See [`truncate_file_name_with_hash`]. Preserves the input [`Vc`] if no truncation was
@@ -1381,9 +1381,9 @@ pub async fn rebase(
     let new_path;
     if old_base.path.is_empty() {
         if new_base.path.is_empty() {
-            new_path = fs_path.path.clone();
+            new_path = Cow::Borrowed(&*fs_path.path);
         } else {
-            new_path = [new_base.path.as_str(), "/", &fs_path.path].concat().into();
+            new_path = Cow::Owned([new_base.path.as_str(), "/", &fs_path.path].concat());
         }
     } else {
         let base_path = [&old_base.path, "/"].concat();
@@ -1396,14 +1396,13 @@ pub async fn rebase(
             );
         }
         if new_base.path.is_empty() {
-            new_path = [&fs_path.path[base_path.len()..]].concat().into();
+            new_path = Cow::Borrowed(&fs_path.path[base_path.len()..]);
         } else {
-            new_path = [new_base.path.as_str(), &fs_path.path[old_base.path.len()..]]
-                .concat()
-                .into();
+            new_path =
+                Cow::Owned([new_base.path.as_str(), &fs_path.path[old_base.path.len()..]].concat());
         }
     }
-    new_base.fs.root().await?.join(new_path)
+    new_base.fs.root().await?.join(&new_path)
 }
 
 #[turbo_tasks::value_impl]
@@ -1414,7 +1413,7 @@ impl FileSystemPath {
     #[turbo_tasks::function]
     pub async fn join_vc(self: Vc<Self>, path: RcStr) -> Result<Vc<Self>> {
         let this = self.await?;
-        let new_path = this.join(path)?;
+        let new_path = this.join(&path)?;
 
         Ok(new_path.cell())
     }
@@ -1490,12 +1489,10 @@ async fn read_dir(path: FileSystemPath) -> Result<Vc<DirectoryContent>> {
             let mut normalized_entries = AutoMap::new();
             for (name, entry) in entries {
                 let entry = match entry {
-                    RawDirectoryEntry::File => DirectoryEntry::File(path.join(name.clone())?),
-                    RawDirectoryEntry::Directory => {
-                        DirectoryEntry::Directory(path.join(name.clone())?)
-                    }
-                    RawDirectoryEntry::Symlink => DirectoryEntry::Symlink(path.join(name.clone())?),
-                    RawDirectoryEntry::Other => DirectoryEntry::Other(path.join(name.clone())?),
+                    RawDirectoryEntry::File => DirectoryEntry::File(path.join(name)?),
+                    RawDirectoryEntry::Directory => DirectoryEntry::Directory(path.join(name)?),
+                    RawDirectoryEntry::Symlink => DirectoryEntry::Symlink(path.join(name)?),
+                    RawDirectoryEntry::Other => DirectoryEntry::Other(path.join(name)?),
                     RawDirectoryEntry::Error => DirectoryEntry::Error,
                 };
                 normalized_entries.insert(name.clone(), entry);
@@ -1586,7 +1583,7 @@ async fn realpath_with_links(path: FileSystemPath) -> Result<Vc<RealPathResult>>
             .rsplit_once('/')
             .map_or(current.path.as_str(), |(_, name)| name);
         if parent_result.path != parent {
-            current = parent_result.path.join(basename.into())?;
+            current = parent_result.path.join(basename)?;
         }
         symlinks.extend(parent_result.symlinks);
 
@@ -1607,7 +1604,7 @@ async fn realpath_with_links(path: FileSystemPath) -> Result<Vc<RealPathResult>>
             } else {
                 parent_result.path
             }
-            .join(target.clone())?;
+            .join(target)?;
         } else {
             // get_type() and read_link() might disagree temporarily due to turbo-tasks
             // eventual consistency or if the file gets invalidated before the directory does
@@ -2493,24 +2490,24 @@ mod tests {
 
             let path_txt = FileSystemPath::new_normalized(fs, "foo/bar.txt".into());
 
-            let path_json = path_txt.with_extension("json".into());
+            let path_json = path_txt.with_extension("json");
             assert_eq!(&*path_json.path, "foo/bar.json");
 
-            let path_no_ext = path_txt.with_extension("".into());
+            let path_no_ext = path_txt.with_extension("");
             assert_eq!(&*path_no_ext.path, "foo/bar");
 
-            let path_new_ext = path_no_ext.with_extension("json".into());
+            let path_new_ext = path_no_ext.with_extension("json");
             assert_eq!(&*path_new_ext.path, "foo/bar.json");
 
             let path_no_slash_txt = FileSystemPath::new_normalized(fs, "bar.txt".into());
 
-            let path_no_slash_json = path_no_slash_txt.with_extension("json".into());
+            let path_no_slash_json = path_no_slash_txt.with_extension("json");
             assert_eq!(path_no_slash_json.path.as_str(), "bar.json");
 
-            let path_no_slash_no_ext = path_no_slash_txt.with_extension("".into());
+            let path_no_slash_no_ext = path_no_slash_txt.with_extension("");
             assert_eq!(path_no_slash_no_ext.path.as_str(), "bar");
 
-            let path_no_slash_new_ext = path_no_slash_no_ext.with_extension("json".into());
+            let path_no_slash_new_ext = path_no_slash_no_ext.with_extension("json");
             assert_eq!(path_no_slash_new_ext.path.as_str(), "bar.json");
 
             anyhow::Ok(())
@@ -2532,16 +2529,16 @@ mod tests {
             assert_eq!(path.file_stem(), None);
 
             let path = FileSystemPath::new_normalized(fs, "foo/bar.txt".into());
-            assert_eq!(path.file_stem().as_deref(), Some("bar"));
+            assert_eq!(path.file_stem(), Some("bar"));
 
             let path = FileSystemPath::new_normalized(fs, "bar.txt".into());
-            assert_eq!(path.file_stem().as_deref(), Some("bar"));
+            assert_eq!(path.file_stem(), Some("bar"));
 
             let path = FileSystemPath::new_normalized(fs, "foo/bar".into());
-            assert_eq!(path.file_stem().as_deref(), Some("bar"));
+            assert_eq!(path.file_stem(), Some("bar"));
 
             let path = FileSystemPath::new_normalized(fs, "foo/.bar".into());
-            assert_eq!(path.file_stem().as_deref(), Some(".bar"));
+            assert_eq!(path.file_stem(), Some(".bar"));
 
             anyhow::Ok(())
         })

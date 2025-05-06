@@ -34,7 +34,7 @@ async fn main() -> Result<()> {
 
             // Smart Pointer cast
             let fs: Vc<Box<dyn FileSystem>> = Vc::upcast(disk_fs);
-            let input = fs.root().await?.join("crates".into())?;
+            let input = fs.root().await?.join("crates")?;
             let glob: Vc<Glob> = Glob::new("**/*.rs".into());
             let glob_result = input.read_glob(glob, true);
             let dir_hash = hash_glob_result(glob_result);

@@ -141,10 +141,8 @@ impl Module for TsConfigModuleAsset {
                 let mut all_types = Vec::new();
                 let mut current = self.source.ident().path().await?.parent();
                 loop {
-                    if let DirectoryContent::Entries(entries) = &*current
-                        .join("node_modules/@types".into())?
-                        .read_dir()
-                        .await?
+                    if let DirectoryContent::Entries(entries) =
+                        &*current.join("node_modules/@types")?.read_dir().await?
                     {
                         all_types.extend(entries.iter().filter_map(|(name, _)| {
                             if name.starts_with('.') {

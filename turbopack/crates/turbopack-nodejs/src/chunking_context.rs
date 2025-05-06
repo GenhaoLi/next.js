@@ -291,7 +291,7 @@ impl ChunkingContext for NodeJsChunkingContext {
             .output_name(self.root_path.clone(), extension)
             .owned()
             .await?;
-        Ok(root_path.join(name)?.cell())
+        Ok(root_path.join(&name)?.cell())
     }
 
     #[turbo_tasks::function]
@@ -339,7 +339,7 @@ impl ChunkingContext for NodeJsChunkingContext {
                 content_hash = &content_hash[..8]
             ),
         };
-        Ok(self.asset_root_path.join(asset_path.into())?.cell())
+        Ok(self.asset_root_path.join(&asset_path)?.cell())
     }
 
     #[turbo_tasks::function]

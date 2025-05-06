@@ -239,7 +239,7 @@ impl RequireContextAssetReference {
     ) -> Result<Self> {
         let map = RequireContextMap::generate(
             *origin,
-            origin.origin_path().await?.parent().join(dir.clone())?,
+            origin.origin_path().await?.parent().join(&dir)?,
             include_subdirs,
             filter,
             issue_source.clone(),

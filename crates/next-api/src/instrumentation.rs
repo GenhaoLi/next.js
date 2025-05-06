@@ -148,7 +148,7 @@ impl InstrumentationEndpoint {
                 this.project
                     .node_root()
                     .await?
-                    .join("server/instrumentation.js".into())?,
+                    .join("server/instrumentation.js")?,
                 get_server_runtime_entries(
                     Value::new(ServerContextType::Instrumentation {
                         app_dir: this.app_dir.clone(),
@@ -197,7 +197,7 @@ impl InstrumentationEndpoint {
                 ..Default::default()
             };
             let middleware_manifest_v2 = VirtualOutputAsset::new(
-                node_root.join("server/instrumentation/middleware-manifest.json".into())?,
+                node_root.join("server/instrumentation/middleware-manifest.json")?,
                 AssetContent::file(
                     FileContent::Content(File::from(serde_json::to_string_pretty(
                         &middleware_manifest_v2,

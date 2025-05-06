@@ -387,7 +387,7 @@ impl Issue for FatalStreamIssue {
         Ok(ServerFileSystem::new()
             .root()
             .await?
-            .join(self.resource.clone())?
+            .join(&self.resource)?
             .cell())
     }
 

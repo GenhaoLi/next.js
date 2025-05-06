@@ -43,7 +43,7 @@ impl AssetIdent {
     pub async fn rename_as_ref(&mut self, pattern: &str) -> Result<()> {
         let root = self.path.root();
         let path = &self.path;
-        self.path = root.await?.join(pattern.replace('*', &path.path).into())?;
+        self.path = root.await?.join(&pattern.replace('*', &path.path))?;
         Ok(())
     }
 }

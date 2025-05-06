@@ -355,7 +355,7 @@ impl ClientReferenceManifest {
                 let server_component_name = server_component
                     .server_path()
                     .await?
-                    .with_extension("".into())
+                    .with_extension("")
                     .value_to_string()
                     .await?;
                 let mut entry_css_files_with_chunk = Vec::new();
@@ -423,10 +423,9 @@ impl ClientReferenceManifest {
             // path still (same as webpack does)
             let normalized_manifest_entry = entry_name.replace("%5F", "_");
             Ok(Vc::upcast(VirtualOutputAsset::new_with_references(
-                node_root.join(
-                    format!("server/app{normalized_manifest_entry}_client-reference-manifest.js",)
-                        .into(),
-                )?,
+                node_root.join(&format!(
+                    "server/app{normalized_manifest_entry}_client-reference-manifest.js"
+                ))?,
                 AssetContent::file(
                     File::from(formatdoc! {
                         r#"

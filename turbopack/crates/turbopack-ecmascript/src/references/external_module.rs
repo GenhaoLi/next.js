@@ -125,12 +125,10 @@ impl Module for CachedExternalModule {
     async fn ident(&self) -> Result<Vc<AssetIdent>> {
         let fs = VirtualFileSystem::new_with_name("externals".into());
 
-        Ok(
-            AssetIdent::from_path(fs.root().await?.join(self.request.clone())?)
-                .with_layer(layer())
-                .with_modifier(Vc::cell(self.request.clone()))
-                .with_modifier(Vc::cell(self.external_type.to_string().into())),
-        )
+        Ok(AssetIdent::from_path(fs.root().await?.join(&self.request)?)
+            .with_layer(layer())
+            .with_modifier(Vc::cell(self.request.clone()))
+            .with_modifier(Vc::cell(self.external_type.to_string().into())))
     }
 
     #[turbo_tasks::function]

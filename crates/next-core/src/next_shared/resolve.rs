@@ -286,7 +286,7 @@ impl AfterResolvePlugin for NextNodeSharedRuntimeResolvePlugin {
         _request: Vc<Request>,
     ) -> Result<Vc<ResolveResultOption>> {
         let stem = fs_path.file_stem();
-        let stem = stem.as_deref().unwrap_or_default();
+        let stem = stem.unwrap_or_default();
         let stem = stem.replace(".shared-runtime", "");
 
         let resource_request = format!(
@@ -312,7 +312,7 @@ impl AfterResolvePlugin for NextNodeSharedRuntimeResolvePlugin {
         let new_path = fs_path
             .root()
             .await?
-            .join(format!("{base}/{resource_request}").into())?;
+            .join(&format!("{base}/{resource_request}"))?;
 
         Ok(Vc::cell(Some(ResolveResult::source(ResolvedVc::upcast(
             FileSource::new(new_path).to_resolved().await?,
@@ -412,7 +412,7 @@ impl AfterResolvePlugin for NextSharedRuntimeResolvePlugin {
     ) -> Result<Vc<ResolveResultOption>> {
         let raw_fs_path = fs_path.clone();
         let modified_path = raw_fs_path.path.replace("next/dist/esm/", "next/dist/");
-        let new_path = fs_path.root().await?.join(modified_path.into())?;
+        let new_path = fs_path.root().await?.join(&modified_path)?;
         Ok(Vc::cell(Some(ResolveResult::source(ResolvedVc::upcast(
             FileSource::new(new_path).to_resolved().await?,
         )))))

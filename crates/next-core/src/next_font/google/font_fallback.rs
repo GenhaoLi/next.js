@@ -53,7 +53,7 @@ pub(super) async fn get_font_fallback(
         None => {
             let metrics_json = load_next_js_templateon(
                 lookup_path.clone(),
-                "dist/server/capsize-font-metrics.json".into(),
+                "dist/server/capsize-font-metrics.json",
             )
             .await?;
             let fallback = lookup_fallback(

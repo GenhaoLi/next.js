@@ -32,11 +32,13 @@ pub(crate) async fn create_font_manifest(
         .collect();
 
     let path = if app_dir {
-        node_root
-            .join(format!("server/app{manifest_path_prefix}/next-font-manifest.json",).into())?
+        node_root.join(&format!(
+            "server/app{manifest_path_prefix}/next-font-manifest.json"
+        ))?
     } else {
-        node_root
-            .join(format!("server/pages{manifest_path_prefix}/next-font-manifest.json").into())?
+        node_root.join(&format!(
+            "server/pages{manifest_path_prefix}/next-font-manifest.json"
+        ))?
     };
 
     let has_fonts = !font_paths.is_empty();
