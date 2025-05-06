@@ -236,7 +236,8 @@ impl<T: KeyValueDatabase + Send + Sync + 'static> BackingStorage
                             let mut task_type_bytes = Vec::new();
                             for (task_type, task_id) in updates {
                                 let task_id: u32 = *task_id;
-                                serialize_task_type(&task_type, &mut task_type_bytes, task_id)?;
+                                let rcstr_map =
+                                    serialize_task_type(&task_type, &mut task_type_bytes, task_id)?;
 
                                 batch
                                     .put(
@@ -306,7 +307,8 @@ impl<T: KeyValueDatabase + Send + Sync + 'static> BackingStorage
                         let mut task_type_bytes = Vec::new();
                         for (task_type, task_id) in task_cache_updates.into_iter().flatten() {
                             let task_id = *task_id;
-                            serialize_task_type(&task_type, &mut task_type_bytes, task_id)?;
+                            let rcstr_map =
+                                serialize_task_type(&task_type, &mut task_type_bytes, task_id)?;
 
                             batch
                                 .put(
@@ -611,9 +613,9 @@ fn serialize_task_type(
     task_type: &Arc<CachedTaskType>,
     mut task_type_bytes: &mut Vec<u8>,
     task_id: u32,
-) -> Result<()> {
+) -> Result<RcStrToLocalId> {
     task_type_bytes.clear();
-    interning_serde::to_writer(&POT_CONFIG, task_type, &mut task_type_bytes)
+    let result = interning_serde::to_writer(&POT_CONFIG, task_type, &mut task_type_bytes)
         .with_context(|| anyhow!("Unable to serialize task {task_id} cache key {task_type:?}"))?;
     #[cfg(feature = "verify_serialization")]
     {
@@ -625,7 +627,7 @@ fn serialize_task_type(
             panic!("Task type would not be deserializable {task_id}: {err:?}");
         }
     }
-    Ok(())
+    Ok(result)
 }
 
 type SerializedTasks = Vec<
