@@ -16,8 +16,8 @@ use crate::dynamic_imports::DynamicImportedChunks;
 #[turbo_tasks::function]
 pub async fn create_react_loadable_manifest(
     dynamic_import_entries: Vc<DynamicImportedChunks>,
-    client_relative_path: Vc<FileSystemPath>,
-    output_path: Vc<FileSystemPath>,
+    client_relative_path: FileSystemPath,
+    output_path: FileSystemPath,
     runtime: NextRuntime,
 ) -> Result<Vc<OutputAssets>> {
     let dynamic_import_entries = &*dynamic_import_entries.await?;
@@ -29,7 +29,7 @@ pub async fn create_react_loadable_manifest(
 
         let id = module_id.to_string().owned().await?;
 
-        let client_relative_path_value = client_relative_path.await?;
+        let client_relative_path_value = client_relative_path.clone();
         let files = chunk_output
             .iter()
             .map(move |&file| {

@@ -46,7 +46,7 @@ async fn package_import_map_from_import_mapping(
 #[turbo_tasks::function]
 async fn package_import_map_from_context(
     package_name: RcStr,
-    context_path: ResolvedVc<FileSystemPath>,
+    context_path: FileSystemPath,
 ) -> Vc<ImportMap> {
     let mut import_map = ImportMap::default();
     import_map.insert_exact_alias(
@@ -65,7 +65,7 @@ pub struct ModuleOptions {
 impl ModuleOptions {
     #[turbo_tasks::function]
     pub async fn new(
-        path: Vc<FileSystemPath>,
+        path: FileSystemPath,
         module_options_context: Vc<ModuleOptionsContext>,
         resolve_options_context: Vc<ResolveOptionsContext>,
     ) -> Result<Vc<ModuleOptions>> {
@@ -78,7 +78,7 @@ impl ModuleOptions {
         } = *module_options_context.await?;
 
         if !rules.is_empty() {
-            let path_value = path.await?;
+            let path_value = path.clone();
 
             for (condition, new_context) in rules.iter() {
                 if condition.matches(&path_value).await? {
@@ -114,7 +114,7 @@ impl ModuleOptions {
 
     #[turbo_tasks::function]
     async fn new_internal(
-        path: Option<Vc<FileSystemPath>>,
+        path: Option<FileSystemPath>,
         module_options_context: Vc<ModuleOptionsContext>,
         resolve_options_context: Vc<ResolveOptionsContext>,
     ) -> Result<Vc<ModuleOptions>> {
@@ -470,7 +470,8 @@ impl ModuleOptions {
                 } else {
                     package_import_map_from_context(
                         "postcss".into(),
-                        path.context("need_path in ModuleOptions::new is incorrect")?,
+                        path.clone()
+                            .context("need_path in ModuleOptions::new is incorrect")?,
                     )
                 };
 

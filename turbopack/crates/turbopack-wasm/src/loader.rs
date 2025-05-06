@@ -56,7 +56,12 @@ pub(crate) async fn instantiating_loader_source(
     let code: RcStr = code.into();
 
     Ok(Vc::upcast(VirtualSource::new(
-        source.ident().path().append("_.loader.mjs".into()),
+        source
+            .ident()
+            .path()
+            .await?
+            .append("_.loader.mjs".into())?
+            .cell(),
         AssetContent::file(File::from(code).into()),
     )))
 }
@@ -80,7 +85,12 @@ pub(crate) async fn compiling_loader_source(
     .into();
 
     Ok(Vc::upcast(VirtualSource::new(
-        source.ident().path().append("_.loader.mjs".into()),
+        source
+            .ident()
+            .path()
+            .await?
+            .append("_.loader.mjs".into())?
+            .cell(),
         AssetContent::file(File::from(code).into()),
     )))
 }

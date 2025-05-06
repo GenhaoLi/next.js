@@ -14,11 +14,11 @@ pub enum RuleCondition {
     Not(Box<RuleCondition>),
     ReferenceType(ReferenceType),
     ResourceIsVirtualSource,
-    ResourcePathEquals(ReadRef<FileSystemPath>),
+    ResourcePathEquals(FileSystemPath),
     ResourcePathHasNoExtension,
     ResourcePathEndsWith(String),
     ResourcePathInDirectory(String),
-    ResourcePathInExactDirectory(ReadRef<FileSystemPath>),
+    ResourcePathInExactDirectory(FileSystemPath),
     ContentTypeStartsWith(String),
     ContentTypeEmpty,
     ResourcePathRegex(#[turbo_tasks(trace_ignore)] Regex),
@@ -30,7 +30,7 @@ pub enum RuleCondition {
     /// any glob starting with `./` or `../` will only match paths in the
     /// project. Globs starting with `**` can match any path.
     ResourcePathGlob {
-        base: ReadRef<FileSystemPath>,
+        base: FileSystemPath,
         #[turbo_tasks(trace_ignore)]
         glob: ReadRef<Glob>,
     },
@@ -79,7 +79,7 @@ impl RuleCondition {
             RuleCondition::Not(condition) => {
                 !Box::pin(condition.matches(source, path, reference_type)).await?
             }
-            RuleCondition::ResourcePathEquals(other) => path == &**other,
+            RuleCondition::ResourcePathEquals(other) => path == other,
             RuleCondition::ResourcePathEndsWith(end) => path.path.ends_with(end),
             RuleCondition::ResourcePathHasNoExtension => {
                 if let Some(i) = path.path.rfind('.') {

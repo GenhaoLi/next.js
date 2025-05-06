@@ -19,7 +19,7 @@ pub struct ReadGlobResult {
 /// on the order.
 #[turbo_tasks::function(fs)]
 pub async fn read_glob(
-    directory: Vc<FileSystemPath>,
+    directory: FileSystemPath,
     glob: Vc<Glob>,
     include_dot_files: bool,
 ) -> Result<Vc<ReadGlobResult>> {
@@ -29,7 +29,7 @@ pub async fn read_glob(
 #[turbo_tasks::function(fs)]
 async fn read_glob_inner(
     prefix: RcStr,
-    directory: Vc<FileSystemPath>,
+    directory: FileSystemPath,
     glob: Vc<Glob>,
     include_dot_files: bool,
 ) -> Result<Vc<ReadGlobResult>> {
@@ -39,7 +39,7 @@ async fn read_glob_inner(
 // The `prefix` represents the relative directory path where symlinks are not resolve.
 async fn read_glob_internal(
     prefix: &str,
-    directory: Vc<FileSystemPath>,
+    directory: FileSystemPath,
     glob: Vc<Glob>,
     include_dot_files: bool,
 ) -> Result<ResolvedVc<ReadGlobResult>> {

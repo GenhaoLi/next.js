@@ -98,7 +98,7 @@ impl ModuleReference for WebpackChunkAssetReference {
                     _ => todo!(),
                 };
                 let filename = format!("./chunks/{}.js", chunk_id).into();
-                let source = Vc::upcast(FileSource::new(context_path.join(filename)));
+                let source = Vc::upcast(FileSource::new(context_path.join(filename)?));
 
                 *ModuleResolveResult::module(ResolvedVc::upcast(
                     WebpackModuleAsset::new(source, *self.runtime, *self.transforms)
@@ -164,12 +164,12 @@ impl ModuleReference for WebpackRuntimeAssetReference {
     #[turbo_tasks::function]
     async fn resolve_reference(&self) -> Result<Vc<ModuleResolveResult>> {
         let ty = Value::new(ReferenceType::CommonJs(CommonJsReferenceSubType::Undefined));
-        let options = self.origin.resolve_options(ty.clone());
+        let options = self.origin.resolve_options(ty.clone()).await?;
 
         let options = apply_cjs_specific_options(options);
 
         let resolved = resolve(
-            self.origin.origin_path().parent().resolve().await?,
+            self.origin.origin_path().await?.parent(),
             Value::new(ReferenceType::CommonJs(CommonJsReferenceSubType::Undefined)),
             *self.request,
             options,
