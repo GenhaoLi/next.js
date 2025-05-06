@@ -239,6 +239,9 @@ impl<T: KeyValueDatabase + Send + Sync + 'static> BackingStorage
                                 let rcstr_map =
                                     serialize_task_type(&task_type, &mut task_type_bytes, task_id)?;
 
+                                let global_ids = save_strings_concurrent(batch, &rcstr_map)?;
+                                global_ids.write_to(&mut task_type_bytes)?;
+
                                 batch
                                     .put(
                                         KeySpace::ForwardTaskCache,
@@ -309,6 +312,9 @@ impl<T: KeyValueDatabase + Send + Sync + 'static> BackingStorage
                             let task_id = *task_id;
                             let rcstr_map =
                                 serialize_task_type(&task_type, &mut task_type_bytes, task_id)?;
+
+                            let global_ids = save_strings_serial(batch, &rcstr_map)?;
+                            global_ids.write_to(&mut task_type_bytes)?;
 
                             batch
                                 .put(
