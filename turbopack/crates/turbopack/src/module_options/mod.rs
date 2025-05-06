@@ -648,7 +648,7 @@ impl ModuleOptions {
 
                             match &condition.path {
                                 ConditionPath::Glob(glob) => RuleCondition::ResourcePathGlob {
-                                    base: execution_context.project_path().await?,
+                                    base: (*execution_context.project_path().await?).clone(),
                                     glob: Glob::new(glob.clone()).await?,
                                 },
                                 ConditionPath::Regex(regex) => {
@@ -657,7 +657,7 @@ impl ModuleOptions {
                             }
                         } else if key.contains('/') {
                             RuleCondition::ResourcePathGlob {
-                                base: execution_context.project_path().await?,
+                                base: (*execution_context.project_path().await?).clone(),
                                 glob: Glob::new(key.clone()).await?,
                             }
                         } else {

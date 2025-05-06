@@ -62,11 +62,6 @@ impl FileSystem for VirtualFileSystem {
     }
 
     #[turbo_tasks::function]
-    fn track(&self, _fs_path: FileSystemPath) -> Result<Vc<Completion>> {
-        bail!("Tracking is not possible on the virtual file system")
-    }
-
-    #[turbo_tasks::function]
     fn write(&self, _fs_path: FileSystemPath, _content: Vc<FileContent>) -> Result<Vc<()>> {
         bail!("Writing is not possible on the virtual file system")
     }

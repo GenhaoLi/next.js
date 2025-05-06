@@ -1,5 +1,3 @@
-use std::async_iter;
-
 use anyhow::{bail, Result};
 use turbo_rcstr::RcStr;
 use turbo_tasks::{ResolvedVc, ValueToString, Vc};
@@ -150,7 +148,7 @@ impl FileSystem for AttachedFileSystem {
         path: FileSystemPath,
         content: Vc<FileContent>,
     ) -> Result<Vc<()>> {
-        self.get_inner_fs_path(path).await?.write(content)
+        Ok(self.get_inner_fs_path(path).await?.write(content))
     }
 
     #[turbo_tasks::function(fs)]

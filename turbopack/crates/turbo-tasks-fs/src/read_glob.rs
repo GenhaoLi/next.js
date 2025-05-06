@@ -61,13 +61,13 @@ async fn read_glob_internal(
                 };
                 let entry = resolve_symlink_safely(entry).await?;
                 if glob_value.execute(&entry_path) {
-                    result.results.insert(entry_path.to_string(), entry);
+                    result.results.insert(entry_path.to_string(), entry.clone());
                 }
-                if let DirectoryEntry::Directory(path) = entry {
+                if let DirectoryEntry::Directory(path) = &entry {
                     if glob_value.match_in_directory(&entry_path) {
                         result.inner.insert(
                             entry_path.to_string(),
-                            read_glob_inner(entry_path, *path, glob, include_dot_files)
+                            read_glob_inner(entry_path, path.clone(), glob, include_dot_files)
                                 .to_resolved()
                                 .await?,
                         );
@@ -82,7 +82,7 @@ async fn read_glob_internal(
 
 // Resolve a symlink checking for recursion.
 async fn resolve_symlink_safely(entry: &DirectoryEntry) -> Result<DirectoryEntry> {
-    let resolved_entry = entry.resolve_symlink().await?;
+    let resolved_entry = entry.clone().resolve_symlink().await?;
     if resolved_entry != *entry && matches!(&resolved_entry, DirectoryEntry::Directory(_)) {
         // We followed a symlink to a directory
         // To prevent an infinite loop, which in the case of turbo-tasks would simply
@@ -92,14 +92,11 @@ async fn resolve_symlink_safely(entry: &DirectoryEntry) -> Result<DirectoryEntry
         // Recursion can only occur if the symlink is a directory and points to an
         // ancestor of the current path, which can be detected via a simple prefix
         // match.
-        let source_path = entry.path().unwrap();
-        if *source_path
-            .is_inside_or_equal(*resolved_entry.path().unwrap())
-            .await?
-        {
+        let source_path = entry.clone().path().unwrap();
+        if source_path.is_inside_or_equal(&resolved_entry.clone().path().unwrap()) {
             bail!(
                 "'{}' is a symlink causes that causes an infinite loop!",
-                source_path.await?.path.to_string()
+                source_path.path.to_string()
             )
         }
     }
@@ -113,7 +110,7 @@ async fn resolve_symlink_safely(entry: &DirectoryEntry) -> Result<DirectoryEntry
 ///  but unlike read_glob doesn't accumulate data.
 #[turbo_tasks::function(fs)]
 pub async fn track_glob(
-    directory: Vc<FileSystemPath>,
+    directory: FileSystemPath,
     glob: Vc<Glob>,
     include_dot_files: bool,
 ) -> Result<Vc<Completion>> {
@@ -123,7 +120,7 @@ pub async fn track_glob(
 #[turbo_tasks::function(fs)]
 async fn track_glob_inner(
     prefix: RcStr,
-    directory: Vc<FileSystemPath>,
+    directory: FileSystemPath,
     glob: Vc<Glob>,
     include_dot_files: bool,
 ) -> Result<Vc<Completion>> {
@@ -132,7 +129,7 @@ async fn track_glob_inner(
 
 async fn track_glob_internal(
     prefix: &str,
-    directory: Vc<FileSystemPath>,
+    directory: FileSystemPath,
     glob: Vc<Glob>,
     include_dot_files: bool,
 ) -> Result<Vc<Completion>> {
@@ -161,7 +158,7 @@ async fn track_glob_internal(
                         if glob_value.match_in_directory(&entry_path) {
                             completions.push(track_glob_inner(
                                 entry_path,
-                                *path,
+                                path.clone(),
                                 glob,
                                 include_dot_files,
                             ));
@@ -169,7 +166,7 @@ async fn track_glob_internal(
                     }
                     DirectoryEntry::File(path) => {
                         if glob_value.execute(&entry_path) {
-                            reads.push(fs.read(*path))
+                            reads.push(fs.read(path.clone()))
                         }
                     }
                     DirectoryEntry::Symlink(_) => panic!("we already resolved symlinks"),
@@ -201,7 +198,7 @@ pub mod tests {
     };
 
     use turbo_rcstr::RcStr;
-    use turbo_tasks::{apply_effects, Completion, ReadRef, ResolvedVc, Vc};
+    use turbo_tasks::{apply_effects, Completion, ReadRef, Vc};
     use turbo_tasks_backend::{noop_backing_storage, BackendOptions, TurboTasksBackend};
 
     use crate::{
@@ -243,20 +240,19 @@ pub mod tests {
             ));
             let read_dir = fs
                 .root()
+                .await?
                 .read_glob(Glob::new("**".into()), false)
                 .await
                 .unwrap();
             assert_eq!(read_dir.results.len(), 2);
             assert_eq!(
                 read_dir.results.get("foo"),
-                Some(&DirectoryEntry::File(
-                    fs.root().join("foo".into()).to_resolved().await?
-                ))
+                Some(&DirectoryEntry::File(fs.root().await?.join("foo".into())?))
             );
             assert_eq!(
                 read_dir.results.get("sub"),
                 Some(&DirectoryEntry::Directory(
-                    fs.root().join("sub".into()).to_resolved().await?
+                    fs.root().await?.join("sub".into())?
                 ))
             );
             assert_eq!(read_dir.inner.len(), 1);
@@ -265,7 +261,7 @@ pub mod tests {
             assert_eq!(
                 inner.results.get("sub/bar"),
                 Some(&DirectoryEntry::File(
-                    fs.root().join("sub/bar".into()).to_resolved().await?
+                    fs.root().await?.join("sub/bar".into())?
                 ))
             );
             assert_eq!(inner.inner.len(), 0);
@@ -273,6 +269,7 @@ pub mod tests {
             // Now with a more specific pattern
             let read_dir = fs
                 .root()
+                .await?
                 .read_glob(Glob::new("**/bar".into()), false)
                 .await
                 .unwrap();
@@ -283,7 +280,7 @@ pub mod tests {
             assert_eq!(
                 inner.results.get("sub/bar"),
                 Some(&DirectoryEntry::File(
-                    fs.root().join("sub/bar".into()).to_resolved().await?
+                    fs.root().await?.join("sub/bar".into())?
                 ))
             );
             assert_eq!(inner.inner.len(), 0);
@@ -323,6 +320,7 @@ pub mod tests {
             ));
             let read_dir = fs
                 .root()
+                .await?
                 .read_glob(Glob::new("*.js".into()), false)
                 .await
                 .unwrap();
@@ -330,7 +328,7 @@ pub mod tests {
             assert_eq!(
                 read_dir.results.get("link.js"),
                 Some(&DirectoryEntry::File(
-                    fs.root().join("sub/foo.js".into()).to_resolved().await?
+                    fs.root().await?.join("sub/foo.js".into())?
                 ))
             );
             assert_eq!(read_dir.inner.len(), 0);
@@ -342,13 +340,13 @@ pub mod tests {
     }
 
     #[turbo_tasks::function(operation)]
-    pub async fn delete(path: ResolvedVc<FileSystemPath>) -> anyhow::Result<()> {
+    pub async fn delete(path: FileSystemPath) -> anyhow::Result<()> {
         path.write(FileContent::NotFound.cell()).await?;
         Ok(())
     }
 
     #[turbo_tasks::function(operation)]
-    pub async fn track_star_star_glob(path: ResolvedVc<FileSystemPath>) -> Vc<Completion> {
+    pub async fn track_star_star_glob(path: FileSystemPath) -> Vc<Completion> {
         path.track_glob(Glob::new("**".into()), false)
     }
 
@@ -387,31 +385,26 @@ pub mod tests {
                 path,
                 Vec::new(),
             ));
-            let read_dir = track_star_star_glob(fs.root().to_resolved().await?)
+            let read_dir = track_star_star_glob((*fs.root().await?).clone())
                 .read_strongly_consistent()
                 .await?;
 
             // Delete a file that we shouldn't be tracking
-            let delete_result = delete(
-                fs.root()
-                    .join("sub/.vim/.gitignore".into())
-                    .to_resolved()
-                    .await?,
-            );
+            let delete_result = delete(fs.root().await?.join("sub/.vim/.gitignore".into())?);
             delete_result.read_strongly_consistent().await?;
             apply_effects(delete_result).await?;
 
-            let read_dir2 = track_star_star_glob(fs.root().to_resolved().await?)
+            let read_dir2 = track_star_star_glob((*fs.root().await?).clone())
                 .read_strongly_consistent()
                 .await?;
             assert!(ReadRef::ptr_eq(&read_dir, &read_dir2));
 
             // Delete a file that we should be tracking
-            let delete_result = delete(fs.root().join("foo".into()).to_resolved().await?);
+            let delete_result = delete(fs.root().await?.join("foo".into())?);
             delete_result.read_strongly_consistent().await?;
             apply_effects(delete_result).await?;
 
-            let read_dir2 = track_star_star_glob(fs.root().to_resolved().await?)
+            let read_dir2 = track_star_star_glob((*fs.root().await?).clone())
                 .read_strongly_consistent()
                 .await?;
 
@@ -453,6 +446,7 @@ pub mod tests {
             ));
             let err = fs
                 .root()
+                .await?
                 .read_glob(Glob::new("**".into()), false)
                 .await
                 .expect_err("Should have detected an infinite loop");
@@ -465,6 +459,7 @@ pub mod tests {
             // Same when calling track glob
             let err = fs
                 .root()
+                .await?
                 .track_glob(Glob::new("**".into()), false)
                 .await
                 .expect_err("Should have detected an infinite loop");

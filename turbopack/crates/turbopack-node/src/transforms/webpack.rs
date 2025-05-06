@@ -506,10 +506,11 @@ impl EvaluateContext for WebpackLoaderContext {
                     .try_join();
                 let directory_subscriptions = directories
                     .iter()
-                    .map(|(dir, glob)| {
+                    .map(|(dir, glob)| async move {
                         self.cwd
-                            .join(dir.clone())
+                            .join(dir.clone())?
                             .track_glob(Glob::new(glob.clone()), false)
+                            .await
                     })
                     .try_join();
                 let build_paths = build_file_paths
