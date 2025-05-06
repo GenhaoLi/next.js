@@ -51,8 +51,6 @@ impl LocalIdToGlobalId {
     }
 
     pub fn write_to(&self, writer: &mut impl Write) -> anyhow::Result<()> {
-        dbg!(&self.0);
-
         let len = self.0.len() as u32;
         for id in self.0.iter().rev() {
             writer.write_all(&id.to_le_bytes())?;
@@ -79,8 +77,6 @@ impl LocalIdToGlobalId {
             bytes = &bytes[..bytes.len() - 4];
         }
 
-        dbg!(&global_ids);
-
         Ok((Self(global_ids), bytes))
     }
 }
@@ -92,8 +88,6 @@ where
 {
     let (result, ser_map) = turbo_rcstr::set_ser_map(|| config.serialize_into(value, writer));
     result?;
-
-    dbg!(&ser_map);
 
     Ok(RcStrToLocalId(ser_map))
 }
