@@ -9349,6 +9349,7 @@ version = "0.1.0"
 dependencies = [
  "criterion",
  "new_debug_unreachable",
+ "rustc-hash 2.1.1",
  "serde",
  "shrink-to-fit",
  "triomphe 0.1.12",
