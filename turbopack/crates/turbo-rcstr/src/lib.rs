@@ -15,7 +15,10 @@ use shrink_to_fit::ShrinkToFit;
 use triomphe::Arc;
 use turbo_tasks_hash::{DeterministicHash, DeterministicHasher};
 
-use crate::{dynamic::new_atom, tagged_value::TaggedValue};
+use crate::{
+    dynamic::{cast, new_atom},
+    tagged_value::TaggedValue,
+};
 
 mod dynamic;
 mod tagged_value;
@@ -256,7 +259,15 @@ impl Default for RcStr {
 
 impl PartialEq for RcStr {
     fn eq(&self, other: &Self) -> bool {
-        self.as_str() == other.as_str()
+        match (self.tag(), other.tag()) {
+            (DYNAMIC_TAG, DYNAMIC_TAG) => {
+                let l = unsafe { &*cast(self.unsafe_data) };
+                let r = unsafe { &*cast(other.unsafe_data) };
+                l.1 == r.1 && l.0 == r.0
+            }
+            (INLINE_TAG, INLINE_TAG) => self.as_str() == other.as_str(),
+            _ => false,
+        }
     }
 }
 
@@ -276,7 +287,14 @@ impl Ord for RcStr {
 
 impl Hash for RcStr {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.as_str().hash(state);
+        match self.tag() {
+            DYNAMIC_TAG => {
+                let l = unsafe { &*cast(self.unsafe_data) };
+                state.write_u64(l.1);
+            }
+            INLINE_TAG => self.as_str().hash(state),
+            _ => unsafe { debug_unreachable!() },
+        }
     }
 }
 
