@@ -1003,7 +1003,7 @@ async fn insert_next_shared_aliases(
     import_map.insert_exact_alias(
         "private-next-rsc-track-dynamic-import",
         request_to_import_mapping(
-            project_path,
+            project_path.clone(),
             "next/dist/build/webpack/loaders/next-flight-loader/track-dynamic-import",
         ),
     );
