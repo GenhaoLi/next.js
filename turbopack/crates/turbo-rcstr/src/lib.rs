@@ -103,8 +103,8 @@ impl RcStr {
                 // convert `self` into `arc`
                 let arc = unsafe { dynamic::restore_arc(ManuallyDrop::new(self).unsafe_data) };
                 match Arc::try_unwrap(arc) {
-                    Ok(v) => v,
-                    Err(arc) => arc.to_string(),
+                    Ok(v) => v.0,
+                    Err(arc) => arc.0.to_string(),
                 }
             }
             INLINE_TAG => self.as_str().to_string(),
