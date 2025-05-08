@@ -16,7 +16,7 @@ use triomphe::Arc;
 use turbo_tasks_hash::{DeterministicHash, DeterministicHasher};
 
 use crate::{
-    dynamic::{cast, new_atom},
+    dynamic::{deref_from, new_atom},
     tagged_value::TaggedValue,
 };
 
@@ -83,7 +83,7 @@ impl RcStr {
     #[inline(never)]
     pub fn as_str(&self) -> &str {
         match self.tag() {
-            DYNAMIC_TAG => unsafe { dynamic::deref_from(self.unsafe_data) },
+            DYNAMIC_TAG => unsafe { dynamic::deref_from(self.unsafe_data).0.as_str() },
             INLINE_TAG => {
                 let len = (self.unsafe_data.tag() & LEN_MASK) >> LEN_OFFSET;
                 let src = self.unsafe_data.data();
@@ -261,8 +261,8 @@ impl PartialEq for RcStr {
     fn eq(&self, other: &Self) -> bool {
         match (self.tag(), other.tag()) {
             (DYNAMIC_TAG, DYNAMIC_TAG) => {
-                let l = unsafe { &*cast(self.unsafe_data) };
-                let r = unsafe { &*cast(other.unsafe_data) };
+                let l = unsafe { deref_from(self.unsafe_data) };
+                let r = unsafe { deref_from(other.unsafe_data) };
                 l.1 == r.1 && l.0 == r.0
             }
             (INLINE_TAG, INLINE_TAG) => self.as_str() == other.as_str(),
@@ -289,7 +289,7 @@ impl Hash for RcStr {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self.tag() {
             DYNAMIC_TAG => {
-                let l = unsafe { &*cast(self.unsafe_data) };
+                let l = unsafe { deref_from(self.unsafe_data) };
                 state.write_u64(l.1);
             }
             INLINE_TAG => self.as_str().hash(state),

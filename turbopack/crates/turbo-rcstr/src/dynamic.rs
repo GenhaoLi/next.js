@@ -11,14 +11,14 @@ use crate::{
     RcStr, INLINE_TAG_INIT, LEN_OFFSET, TAG_MASK,
 };
 
-type TStr = (String, u64);
+pub(crate) struct TStr(pub String, pub u64);
 
 pub unsafe fn cast(ptr: TaggedValue) -> *const TStr {
     ptr.get_ptr().cast()
 }
 
-pub unsafe fn deref_from<'i>(ptr: TaggedValue) -> &'i String {
-    &(*cast(ptr)).0
+pub unsafe fn deref_from<'i>(ptr: TaggedValue) -> &'i TStr {
+    &*cast(ptr)
 }
 
 /// Caller should call `forget` (or `clone`) on the returned `Arc`
@@ -44,12 +44,12 @@ pub(crate) fn new_atom<T: AsRef<str> + Into<String>>(text: T) -> RcStr {
 
     let hash = compute_fxhash(text.as_ref());
 
-    let entry: Arc<TStr> = Arc::new((text.into(), hash));
+    let entry: Arc<TStr> = Arc::new(TStr(text.into(), hash));
     let entry = Arc::into_raw(entry);
 
     let ptr: NonNull<TStr> = unsafe {
         // Safety: Arc::into_raw returns a non-null pointer
-        NonNull::new_unchecked(entry as *mut TStr)
+        NonNull::new_unchecked(entry as *mut _)
     };
     debug_assert!(0 == ptr.as_ptr() as u8 & TAG_MASK);
     RcStr {
