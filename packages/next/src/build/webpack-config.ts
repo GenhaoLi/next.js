@@ -1936,7 +1936,6 @@ export default async function getBaseWebpackConfig(
           hasRewrites,
           isClient,
           isEdgeServer,
-          isNodeOrEdgeCompilation,
           isNodeServer,
           middlewareMatchers,
           omitNonDeterministic: isCompileMode,
