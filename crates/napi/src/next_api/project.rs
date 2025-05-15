@@ -831,8 +831,16 @@ pub async fn project_write_all_entrypoints_to_disk(
     app_dir_only: bool,
 ) -> napi::Result<TurbopackResult<NapiEntrypoints>> {
     let turbo_tasks = project.turbo_tasks.clone();
+    let compilation_event_sender = turbo_tasks.clone();
+
     let (entrypoints, issues, diags) = turbo_tasks
         .run_once(async move {
+            let now = Instant::now();
+            compilation_event_sender.send_compilation_event(Arc::new(DiagnosticEvent::new(
+                "Starting to write all entrypoints to disk...".to_owned(),
+                Severity::Event,
+            )));
+
             let entrypoints_with_issues_op =
                 get_all_written_entrypoints_with_issues_operation(project.container, app_dir_only);
 
@@ -845,6 +853,14 @@ pub async fn project_write_all_entrypoints_to_disk(
                 .read_strongly_consistent()
                 .await?;
             effects.apply().await?;
+
+            compilation_event_sender.send_compilation_event(Arc::new(DiagnosticEvent::new(
+                format!(
+                    "Finished writing all entrypoints to disk in {:?}",
+                    now.elapsed()
+                ),
+                Severity::Event,
+            )));
 
             Ok((entrypoints.clone(), issues.clone(), diagnostics.clone()))
         })
