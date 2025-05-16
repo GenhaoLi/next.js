@@ -1345,12 +1345,20 @@ async fn process_parse_result(
 
             process_content_with_code_gens(&mut program, globals, code_gens);
 
+            let id = ident.to_string().await?;
             GLOBALS.set(globals, || {
                 if let Some(is_export_mark) = retain_syntax_context {
+                    println!(
+                        "------- {}\n{:#?}\n{}\n",
+                        id,
+                        program,
+                        swc_core::ecma::codegen::to_code(&program)
+                    );
                     program.visit_mut_with(&mut hygiene_rename_only(
                         Some(top_level_mark),
                         is_export_mark,
                     ));
+                    println!("-------");
                 } else {
                     program.visit_mut_with(
                         &mut swc_core::ecma::transforms::base::hygiene::hygiene_with_config(
@@ -1585,6 +1593,7 @@ fn hygiene_rename_only(top_level_mark: Option<Mark>, is_export_mark: Mark) -> im
         const RESET_N: bool = true;
 
         fn new_name_for(&self, orig: &Id, n: &mut usize) -> Atom {
+            println!("{:?} {:?}", orig, orig.1.has_mark(self.is_export_mark));
             if orig.1.has_mark(self.is_export_mark) {
                 // Don't modify, it's an export
                 return orig.0.clone();
