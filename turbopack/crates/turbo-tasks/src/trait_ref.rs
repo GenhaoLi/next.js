@@ -4,7 +4,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    Vc, VcValueTrait,
+    Vc, VcRead, VcValueTrait, VcValueType,
     registry::get_value_type,
     task::shared_reference::TypedSharedReference,
     vc::{ReadVcFuture, VcValueTraitCast, cast::VcCast},
@@ -71,6 +71,17 @@ impl<'de, T> Deserialize<'de> for TraitRef<T> {
         })
     }
 }
+
+// impl<T> std::ops::Deref for TraitRef<T>
+// where
+//     T: VcValueTrait,
+// {
+//     type Target = <T as VcValueTrait>::Read;
+
+//     fn deref(&self) -> &Self::Target {
+//         &*self.shared_reference.1.0 as &Self::Target
+//     }
+// }
 
 // Otherwise, TraitRef<Box<dyn Trait>> would not be Sync.
 // SAFETY: TraitRef doesn't actually contain a T.

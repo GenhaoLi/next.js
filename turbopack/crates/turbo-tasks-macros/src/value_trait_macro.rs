@@ -284,6 +284,7 @@ pub fn value_trait(args: TokenStream, input: TokenStream) -> TokenStream {
             });
 
         impl turbo_tasks::VcValueTrait for Box<dyn #trait_ident> {
+            // type Read = dyn #trait_ident;
             fn get_trait_type_id() -> turbo_tasks::TraitTypeId {
                 *#trait_type_id_ident
             }
