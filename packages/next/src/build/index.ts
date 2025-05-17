@@ -552,7 +552,7 @@ async function writeFunctionsConfigManifest(
   )
 }
 
-interface RequiredServerFilesManifest {
+export interface RequiredServerFilesManifest {
   version: number
   config: NextConfigComplete
   appDir: string
@@ -2291,8 +2291,6 @@ export default async function build(
                 ...config.experimental,
                 cacheHandlers: normalizedCacheHandlers,
                 trustHostHeader: ciEnvironment.hasNextSupport,
-
-                // @ts-expect-error internal field TODO: fix this, should use a separate mechanism to pass the info.
                 isExperimentalCompile: isCompileMode,
               },
             },

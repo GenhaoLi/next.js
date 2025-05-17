@@ -25,30 +25,35 @@ export function loadManifest<T extends object>(
 export function loadManifest<T extends object>(
   path: string,
   shouldCache?: boolean,
-  cache?: Map<string, unknown>
+  cache?: Map<string, unknown>,
+  skipParse?: boolean
 ): DeepReadonly<T>
 export function loadManifest<T extends object>(
   path: string,
   shouldCache?: true,
-  cache?: Map<string, unknown>
+  cache?: Map<string, unknown>,
+  skipParse?: boolean
 ): DeepReadonly<T>
 export function loadManifest<T extends object>(
   path: string,
   shouldCache: boolean = true,
-  cache = sharedCache
+  cache = sharedCache,
+  skipParse = false
 ): T {
   const cached = shouldCache && cache.get(path)
   if (cached) {
     return cached as T
   }
 
-  let manifest = JSON.parse(
-    readFileSync(/* turbopackIgnore: true */ path, 'utf8')
-  )
+  let manifest: any = readFileSync(/* turbopackIgnore: true */ path, 'utf8')
 
-  // Freeze the manifest so it cannot be modified if we're caching it.
-  if (shouldCache) {
-    manifest = deepFreeze(manifest)
+  if (!skipParse) {
+    manifest = JSON.parse(manifest)
+
+    // Freeze the manifest so it cannot be modified if we're caching it.
+    if (shouldCache) {
+      manifest = deepFreeze(manifest)
+    }
   }
 
   if (shouldCache) {
@@ -107,12 +112,14 @@ export function loadManifestFromRelativePath<T extends object>(
   distDir: string,
   manifest: string,
   shouldCache = true,
-  cache?: Map<string, unknown>
+  cache?: Map<string, unknown>,
+  skipParse?: boolean
 ): DeepReadonly<T> {
   return loadManifest<T>(
     join(/* turbopackIgnore: true */ projectDir, distDir, manifest),
     shouldCache,
-    cache
+    cache,
+    skipParse
   )
 }
 

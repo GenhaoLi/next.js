@@ -1053,7 +1053,7 @@ describe('required server files', () => {
     )
     expect(res.status).toBe(200)
     const json = await res.json()
-    expect(json.pageProps.resolvedUrl).toBe('/dynamic/post-2')
+    expect(json.pageProps.resolvedUrl).toBe('/dynamic/post-2?slug=post-2')
   })
 
   it('should bubble error correctly for gip page', async () => {
