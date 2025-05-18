@@ -52,10 +52,6 @@ impl TryFrom<GlobForm> for Glob {
 }
 
 impl Glob {
-    pub fn execute(&self, path: &str) -> bool {
-        self.matches(path)
-    }
-
     // Returns true if the glob matches the given path.
     pub fn matches(&self, path: &str) -> bool {
         self.regex.is_match(path.as_bytes())
@@ -727,7 +723,7 @@ mod tests {
 
         println!("{glob:?} {path}");
 
-        assert!(!glob.execute(path));
+        assert!(!glob.matches(path));
     }
 
     #[rstest]
