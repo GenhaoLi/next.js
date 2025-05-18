@@ -1378,7 +1378,6 @@ enum SingleModuleGraphBuilderNode {
         idx: GraphNodeIndex,
     },
     /// Issues to be added to the parent Module node
-    #[allow(dead_code)]
     Issues(Vec<ResolvedVc<Box<dyn Issue>>>),
 }
 
@@ -1468,22 +1467,22 @@ impl Visit<SingleModuleGraphBuilderNode> for SingleModuleGraphBuilder<'_> {
         async move {
             Ok(match (module, chunkable_ref_target) {
                 (Some(module), None) => {
-                    let refs_cell = primary_chunkable_referenced_modules(*module, include_traced);
-                    let refs = match refs_cell.await {
+                    let refs_cell = primary_chunkable_referenced_modules(module, include_traced);
+                    let refs = match refs_cell.read_strongly_consistent().await {
                         Ok(refs) => refs,
                         Err(e) => {
                             return Err(e.context(module.ident().to_string().await?));
                         }
                     };
                     // TODO This is currently too slow
-                    // let refs_issues = refs_cell
-                    //     .take_collectibles::<Box<dyn Issue>>()
-                    //     .iter()
-                    //     .map(|issue| issue.to_resolved())
-                    //     .try_join()
-                    // .await?;
+                    let refs_issues: Vec<ResolvedVc<Box<dyn Issue>>> = refs_cell
+                        .take_collectibles::<Box<dyn Issue>>()
+                        .iter()
+                        .copied()
+                        .collect();
 
-                    refs.iter()
+                    let mut targets = refs
+                        .iter()
                         .flat_map(|(ty, modules)| modules.iter().map(|m| (ty.clone(), *m)))
                         .map(async |(ty, target)| {
                             let to = if ty == COMMON_CHUNKING_TYPE {
@@ -1499,7 +1498,13 @@ impl Visit<SingleModuleGraphBuilderNode> for SingleModuleGraphBuilder<'_> {
                             Ok(SingleModuleGraphBuilderEdge { to })
                         })
                         .try_join()
-                        .await?
+                        .await?;
+                    if !refs_issues.is_empty() {
+                        targets.push(SingleModuleGraphBuilderEdge {
+                            to: SingleModuleGraphBuilderNode::Issues(refs_issues),
+                        });
+                    }
+                    targets
                 }
                 (None, Some(chunkable_ref_target)) => {
                     vec![SingleModuleGraphBuilderEdge {
