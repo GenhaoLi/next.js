@@ -53,6 +53,7 @@ export class NextDevInstance extends NextInstance {
     }
 
     console.log('running', startArgs.join(' '))
+    console.log('CI?:', String(process.env.CI))
     await new Promise<void>((resolve, reject) => {
       try {
         this.childProcess = spawn(startArgs[0], startArgs.slice(1), {
