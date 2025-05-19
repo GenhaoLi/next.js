@@ -740,10 +740,11 @@ describe('CLI Usage', () => {
 
     // only runs on CI as it requires administrator privileges
     test('--experimental-https', async () => {
-      if (!process.env.CI) {
+      if (!process.env.NEXT_TEST_CI) {
         console.warn(
           '--experimental-https only runs on CI as it requires administrator privileges'
         )
+        it('only runs on CI as it requires administrator privileges', () => {})
 
         return
       }

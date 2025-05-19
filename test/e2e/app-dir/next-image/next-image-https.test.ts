@@ -11,7 +11,7 @@ describe('app dir - next-image (with https)', () => {
     return
   }
 
-  if (!process.env.CI) {
+  if (!process.env.NEXT_TEST_CI) {
     console.warn('only runs on CI as it requires administrator privileges')
     it('only runs on CI as it requires administrator privileges', () => {})
     return
